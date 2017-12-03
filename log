@@ -1,0 +1,92 @@
+Start reading file...dataset/YagoData/yagoData.txt, 22-15:38:00
+Finish reading file...dataset/YagoData/yagoData.txt, 22-15:38:36
+Number of start vertices is: 4615886
+Number of distinct vertices is: 21992494
+Number of edges is: 42629862
+
+Start reading file...dataset/YagoGraph/yagoGeonamesData.txt, 22-20:55:31
+Finish reading file...dataset/YagoGraph/yagoGeonamesData.txt, 22-20:55:53
+Number of start vertices is: 4615886
+Number of distinct vertices is: 4616766
+Number of edges is: 32216600
+Number of non-label edges is: 28644100
+
+Finish merging file...dataset/YagoGraph/, 22-21:15:33
+Number of start vertices is: 4615886
+Number of distinct vertices is: 5652098
+Number of edges is: 42629862
+Number of non-label edges is: 36677334
+
+Number of start vertices is: 4615886
+Number of distinct vertices is: 5652098
+Number of edges is: 42629862
+Number of non-label edges is: 36677334
+
+Number of start vertices is: 4615886
+Number of distinct vertices is: 16993618
+Number of edges is: 42629862
+Number of non-label edges is: 36677334
+
+<sameAs>
+<linksTo>
+<redirectTo>
+Number of start vertices is: 4615886
+Number of distinct vertices is: 16423770
+Number of edges is: 39860678
+Number of non-label edges is: 33908150
+
+Start reading file...dataset/YagoGraph/yagoGraph_withoutSameAs.txt
+Finish reading file...dataset/YagoGraph/yagoGraph_withoutSameAs.txt
+Start building inverted index...
+Finish building inverted index...
+2624785
+
+Start reading file...dataset/YagoData/yagoGraph_withoutSameAs.txt
+Finish reading file...dataset/YagoData/yagoGraph_withoutSameAs.txt
+Start creating inverted index...
+Finish creating inverted index...
+Inverted index creating time is: 146452 milliseconds
+Start writing to txt file...dataset/YagoData/yagoInvertedIndex.txt
+Finish writing to txt file...dataset/YagoData/yagoInvertedIndex.txt
+2624784
+
+Start reading data from yago...
+Start searching for NNs...
+retrieved NNs are...[Entry [value=<Shi`b_Sulaym>, geometry=Point [x=39.96667, y=19.95]], Entry [value=<Qiţa`_al_Jabal>, geometry=Point [x=40.03333, y=20.06667]], Entry [value=<Al_Qād_al_Wusţānī>, geometry=Point [x=40.06667, y=20.03333]], Entry [value=<Shi`b_Janāb>, geometry=Point [x=39.93333, y=19.93333]], Entry [value=<Abū_Latt>, geometry=Point [x=40.13333, y=19.96667]]]
+Start generating query keywords...
+size of NN hash is...5
+size of term count hash is...20
+size of query keyword hash is...5
+Query keywords are...[Qiţa`, island, Al, Abū, Abulat]
+
+Point location = Geometries.point(40, 20);
+		double maxDiatance = 10;
+		int numberOfNN = 100;
+		int numberOfKeywords = 5;
+		int valueOfK = 3;
+Query keywords are...[Surrein, Ratḩah, Hasan, Assaka, 108673395]
+
+{{<Gulf_of_Aqaba>=0, <Keren_Āwraja>=0, <Tebay>=0}=27.098439013799425,
+ {<Karbat_Umm_Ray>=0, <Keren_Āwraja>=0, <Tebay>=0}=22.06231783042273, 
+ {<Tis‘a_wa_Tis‘īn_Ray_al_Basātna>=0, <Keren_Āwraja>=0, <Tebay>=0}=23.61554363438603, 
+ {<Tebay>=0, <Ar_Rabwah>=0}=24.16539012117215, 
+ {<Best_Western_Juffair_Hotel>=0, <Keren_Āwraja>=0, <Tebay>=0}=30.780135144029995, 
+ {<Western_Wall>=0, <Keren_Āwraja>=0, <Tebay>=0}=31.669727395975045, 
+ {<Keren_Āwraja>=0, <Ed_Umm_Ray>=0, <Tebay>=0}=22.13577627797587, 
+ {<Keren_Āwraja>=0, <Tebay>=0, <Ma'rib>=0}=20.254089355631134,
+ {<Keren_Āwraja>=0, <Western_Spill_Canal>=0, <Tebay>=0}=24.031933351794514,
+ {<Keren_Āwraja>=0, <Tebay>=0, <Al_Minţaqah_al_Gharbīyah>=0}=30.535406935643625,
+ {<Keren_Āwraja>=0, <Tebay>=0, <Maktab_Ray_Abu_Nagma>=0}=19.208397201375476, 
+ {<Keren_Āwraja>=0, <Ar_Rabwah>=0}=9.479952903551187, 
+ {<Keren_Āwraja>=0, <Tebay>=0, <Maktab_Ray_Wad_al_Bur>=0}=23.779681507754884, 
+ {<Maktab_Ray_Sa‘ad_Allah>=0, <Keren_Āwraja>=0, <Tebay>=0}=23.599535908677183, 
+ {<Necropolis_of_Thebes>=0, <Keren_Āwraja>=0, <Tebay>=0}=24.983118599156253, 
+ {<Tel_Zayit>=0, <Keren_Āwraja>=0, <Tebay>=0}=31.718933164265813, 
+ {<Kuwait>=0, <Keren_Āwraja>=0, <Tebay>=0}=30.873452617077664, 
+ {<Deira>=0, <Keren_Āwraja>=0, <Tebay>=0}=31.698054053776012, 
+ {<Keren_Āwraja>=0, <Tebay>=0, <Qal'at_al-Bahrain>=0}=30.71814073466315, 
+ {<Keren_Āwraja>=0, <Tebay>=0}=14.422365464897648}
+
+[Entry [value=<Prince_Olav_Mountains>, geometry=Point [x=-173.0, y=-84.95]], 
+Entry [value=<Little_Saltlick_Run>, geometry=Point [x=-78.82391, y=40.4023]]]
+
