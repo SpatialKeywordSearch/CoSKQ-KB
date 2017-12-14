@@ -30,6 +30,7 @@ public class BCK {
 	int keywordRelevance;
 	HashMap< HashMap<String,Integer>,Double> validGroups;
 	int numberOfVGGeneration;
+	int numberOfVGRSCalculation;
 	double averageRankingScoreOfkVG;
 	
 	public BCK() {
@@ -43,7 +44,7 @@ public class BCK {
 				new HashMap< HashMap<String,Integer>,Double>();
 	}
 	
-	public void initialize() {
+	public void initialize(String knowledgeBaseName) {
 		this.averageRankingScoreOfkVG = 0;
 		this.numberOfVGGeneration = 0;
 		this.spatialDistance = -1;
@@ -64,28 +65,36 @@ public class BCK {
 		if (!this.subTree.subTreeHash.isEmpty()) {
 			this.subTree.subTreeHash.clear();
 		}
-		String folderName = "dataset/YagoData/";
-		String subtreeFileName = folderName +
-				"yagoSubTree" + ".txt";
+		
+		String subtreeFileName = "";
+		
+		if (knowledgeBaseName.equals("YAGO")) {
+			subtreeFileName = "dataset/YagoData/yagoSubTree.txt";
+		}else if (knowledgeBaseName.equals("DBpedia")) {
+			subtreeFileName = 
+					"dataset/DBpediaData/dbpediaSubTree.txt";
+		}
+		
 		//System.out.println("reading sub-tree...");
 		this.subTree.readSubTreeFromTxt(subtreeFileName);
 	}
 	
 	public HashMap<HashMap<String,Integer>,Double> 
-			findTopkValidGroup(Point queryLocation,
-					LinkedList<String> queryKeywords, int k) {
-		//read data from yago
-		/*System.out.println("Start reading data from yago...");
-		long startLoadingDataTime = System.currentTimeMillis();
-		readDataFromYago();
-	    long finishLoadingDataTime = System.currentTimeMillis();
-	    long dataLoadingTime = 
-	    		finishLoadingDataTime - startLoadingDataTime;
-		System.out.println("Finish reading data from yago,\n"
-				+ "Data loading elapsed time is: "
-				+ dataLoadingTime + " ms.");*/
+			findTopkValidGroup(
+					Point queryLocation,
+					LinkedList<String> queryKeywords, 
+					int k,
+					String knowledBaseName) {
 		
-		initialize();
+		long startTime = System.currentTimeMillis();
+
+		initialize(knowledBaseName);
+		
+		long finishTime = System.currentTimeMillis();
+        long elapsedTime = 
+        		finishTime - startTime;
+		System.out.println("Initialization time is..."
+				+ elapsedTime + " ms");
 		
 		long startBCKTime = System.currentTimeMillis();
 		//pruning rule 1
@@ -110,15 +119,6 @@ public class BCK {
 				NN.filter(entry-> RSP.subTreeHash.containsKey(
 						entry.value()))
 				.toList().toBlocking().single();
-		
-		//System.out.println(this.nearestNeighborList.size());
-		
-		//prune the nearest neighbor list w.r.t. RSP_qd
-		/*System.out.println("prune the NN list w.r.t RSP_qd");
-		nearestNeighborListPruning(RSP);
-		
-		System.out.println("remaining No. of NN is: "
-				+ this.nearestNeighborList.size());*/
 		
 		//move the first two NNs to rsp_qd list
 		this.rspQdList = new ArrayList<Entry<String, Point>>();
@@ -207,8 +207,6 @@ public class BCK {
 	public void readDataFromYago() {
 		//input file paths
 		String folderName = "dataset/YagoData/";
-		String graphFileName = folderName +
-				"yagoGraph" + ".txt";
 		String subtreeInvertedIndexFileName = folderName +
 				"yagoSubTreeInvertedIndex" + ".txt";
 		String subtreeFileName = folderName +
@@ -217,6 +215,33 @@ public class BCK {
 				"yagoVertexInvertedIndex" + ".txt";
 		String geoCoordinatesFileName = folderName +
 				"yagoGeoCoordinates" + ".txt";
+				
+		//reading input files
+		System.out.println("reading sub-tree inverted index...");
+		this.subtreeInvertedIndex.readFromTxt(
+				subtreeInvertedIndexFileName);
+		System.out.println("reading sub-tree...");
+		this.subTree.readSubTreeFromTxt(subtreeFileName);
+		System.out.println("reading vertex inverted index...");
+		this.vertexInvertedIndex.readFromTxt(
+				vertexInvertedIndexFileName);
+		System.out.println("reading geo-coordinates...");
+		this.geoCoordinates.readFromTxt(geoCoordinatesFileName);
+		System.out.println("creating r*-tree...");
+		this.geoIndex.createRTree(this.geoCoordinates);
+	}
+	
+	public void readDataFromDBpedia() {
+		//input file paths
+		String folderName = "dataset/DBpediaData/";
+		String subtreeInvertedIndexFileName = folderName +
+				"dbpediaSubTreeInvertedIndex" + ".txt";
+		String subtreeFileName = folderName +
+				"dbpediaSubTree" + ".txt";
+		String vertexInvertedIndexFileName = folderName +
+				"dbpediaVertexInvertedIndex" + ".txt";
+		String geoCoordinatesFileName = folderName +
+				"dbpediaGeoCoordinates" + ".txt";
 				
 		//reading input files
 		System.out.println("reading sub-tree inverted index...");

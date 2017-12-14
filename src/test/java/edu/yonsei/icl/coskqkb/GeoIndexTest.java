@@ -5,34 +5,35 @@ public class GeoIndexTest {
 	public static void main(String[] args) {
 		// TODO Auto-generated method stub
 		String readFileName =
-				"dataset/YagoData/yagoGeoCoordinates.txt";
+				"dataset/DBpediaData/dbpediaGeoCoordinates.txt";
 		String writeFileName =
-				"dataset/YagoData/yagoGeoIndex.txt";
+				"dataset/DBpediaData/dbpediaGeoIndex.txt";
 		String visualizationFileName =
-				"dataset/YagoData/yagoRTreeVisualization.png";
+				"dataset/DBpediaData/dbpediaRTreeVisualization.png";
+		
+		long startTime = System.currentTimeMillis();
 		
 		GeoCoordinates geoCoordinates = new GeoCoordinates();
 		System.out.println("Start reading geocoordinates..."
 				+ readFileName);
 		geoCoordinates.readFromTxt(readFileName);
-		System.out.println("Finish reading geocoordinates..."
-				+ readFileName);
 		
 		GeoIndex geoIndex = new GeoIndex();
 		System.out.println("Start creating R*-tree");
-		
-		long startTime = System.currentTimeMillis();
 		geoIndex.createRTree(geoCoordinates);
-        long finishTime = System.currentTimeMillis();
-        long executionTime = finishTime - startTime;
 		
-		System.out.println("Finish creating R*-tree..."
-				+ executionTime + " milliseconds");
+		long finishTime = System.currentTimeMillis();
+        long elapsedTime = 
+        		finishTime - startTime;
+		System.out.println("GeoIndex generation time is..."
+				+ elapsedTime + " ms");
 		
+		System.out.println("Start write R*-tree to..."
+				+ writeFileName);
 		geoIndex.writeToTxt(writeFileName);
 		
-		/*geoIndex.rTree.visualize(1000, 1000).save(
-				visualizationFileName);*/
+		geoIndex.rTree.visualize(1000, 1000).save(
+				visualizationFileName);
 		
 		/*System.out.println("Start writing R*-tree to txt..."
 				+ writeFileName);

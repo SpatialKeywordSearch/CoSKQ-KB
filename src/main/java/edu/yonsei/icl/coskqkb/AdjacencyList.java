@@ -21,12 +21,25 @@ public class AdjacencyList {
     static FileReader fr;
     static BufferedReader br;
     int numberOfEdges;
+    int numberOfPlaceVertices;
     
     //Constructor
     public AdjacencyList() {
     	this.graph = 
     			new HashMap<String, HashMap<String,String> >();
     	this.vertexHash = new HashMap<String, Boolean>();
+    }
+    
+    public int getNumverOfPlaceVertices() {
+    	numberOfPlaceVertices=0;
+    	
+    	vertexHash.forEach((vertex,flag)->{
+    		if (flag==Boolean.TRUE) {
+    			numberOfPlaceVertices++;
+			}
+    	});
+    	
+    	return numberOfPlaceVertices;
     }
     
     //Returns the number of vertices
@@ -96,7 +109,9 @@ public class AdjacencyList {
 				//if start vertex has geo-coordinate
 				//set it as place vertex
 				if(edge.equals("<hasLatitude>")
-					|| edge.equals("<hasLongitude>")) {
+					|| edge.equals("<hasLongitude>")
+					|| edge.equals(
+							"<http://www.georss.org/georss/point>")) {
 					vertexHash.put(k, Boolean.TRUE);
 				}
 				
@@ -133,13 +148,16 @@ public class AdjacencyList {
     		while((currentLine = br.readLine()) != null) {
     			//start vertex line
     			if(currentLine.startsWith("{")) {
-    				startVertex = currentLine.substring(1, currentLine.length()-1);
+    				startVertex = currentLine.substring(1, 
+    						currentLine.length()-1);
     			}
     			//edge and endVertex line
     			else if (currentLine.startsWith("[")) {
-    				edge = currentLine.substring(1, currentLine.indexOf("]"));
+    				edge = currentLine.substring(1, 
+    						currentLine.indexOf("]"));
     				endVertex = currentLine.substring(
-    						currentLine.indexOf("{")+1, currentLine.indexOf("}"));
+    						currentLine.indexOf("{")+1, 
+    						currentLine.indexOf("}"));
     				
     				//add to adjacency array list
     				this.addTriple(startVertex, edge, endVertex);
@@ -224,10 +242,13 @@ public class AdjacencyList {
     }
     
     //Add the adjacency list from a ttl file
-    public void addFromTurtle(String filename) {
+    public void addFromTurtle(String filename, 
+    		String knowledgeBaseName) {
     	ArrayList<String> document = new ArrayList<String>();
-		String[] triple;
-		String startVertex, edge, endVertex;
+		String[] triple = null;
+		String startVertex = null;
+		String edge = null;
+		String endVertex = null;
 		
 		Calendar cal = null;
         SimpleDateFormat sdf = new SimpleDateFormat("dd-HH:mm:ss");
@@ -286,14 +307,33 @@ public class AdjacencyList {
 			if(numberOfLine%100000 == 0 && numberOfLine!=0) {
 				cal = Calendar.getInstance();
 				System.out.println(
-						"Counting line for " + filename + ": " + numberOfLine
+						"Counting line for " + filename 
+						+ ": " + numberOfLine
 						+ "," + sdf.format(cal.getTime()));
 			}
 			
-			triple = document.get(numberOfLine).split("\t");
-			startVertex = triple[0];
-			edge = triple[1];
-			endVertex = triple[2];
+			//for YAGO
+			if (knowledgeBaseName.equals("YAGO")) {
+				triple = document.get(numberOfLine).split("\t");
+				startVertex = triple[0];
+				edge = triple[1];
+				endVertex = triple[2];
+			}
+			
+			//for DBpedia
+			if (knowledgeBaseName.equals("DBpedia")) {
+				triple = document.get(numberOfLine).split("\\s+");
+				startVertex = triple[0];
+				edge = triple[1];
+				endVertex = "";
+			}
+			
+			for(int i=2; i<triple.length-1; i++) {
+				if (i!=2) {
+					endVertex = endVertex.concat(" ");
+				}
+				endVertex = endVertex.concat(triple[i]);
+			}
 			
 			this.addTriple(startVertex, edge, endVertex);
 		}
@@ -366,15 +406,19 @@ public class AdjacencyList {
     	String[] filesInFolder = folder.list();
     	
     	for(int i=0; i<filesInFolder.length; i++) {
-    		if(readFileName.equals(folderName + filesInFolder[i])) {
+    		if(readFileName.equals(folderName 
+    				+ filesInFolder[i])) {
     			continue;
     		}
     		
     		cal = Calendar.getInstance();
-    		System.out.println("Start processing..." + filesInFolder[i]
+    		System.out.println("Start processing..."
+    				+ i + "th file..."
+    				+ filesInFolder[i]
     				+ "..." + sdf.format(cal.getTime()));
     		
-    		this.addOnlyEdgeEndVertexFromTxt(folderName + filesInFolder[i]);
+    		this.addOnlyEdgeEndVertexFromTxt(folderName 
+    				+ filesInFolder[i]);
     		
     		cal = Calendar.getInstance();
     		System.out.println("End processing..." + filesInFolder[i]
@@ -386,27 +430,37 @@ public class AdjacencyList {
     		System.out.println();*/
     	}
     	
+    	//delete sameAs,linksTo,redirectTo
+    	this.deleteEdge();
+    	
     	//update the vertex hash
     	this.createVertexHash();
     	
     	this.writeToTxt(writeFileName);
     }
     
-    public void deleteEdge (String[] deletePredicates) {
+    public void deleteEdge () {
+    	ArrayList<String> deletePredicates =
+    			new ArrayList<String>();
+    	//for YAGO
+    	deletePredicates.add("sameAs");
+    	deletePredicates.add("linksTo");
+    	deletePredicates.add("redirectTo");
+    	//for DBpedia
+    	deletePredicates.add(
+    		"<http://www.w3.org/2002/07/owl#sameAs>");
     	HashMap<String, Integer> removalStartVertex =
     			new HashMap<String, Integer>();
+    	HashMap<String, String> removalEdge = 
+    			new HashMap<String, String>();
     	
+    	//find removal edge
     	this.graph.forEach((startVertex,edgeEndVertex)->{
     		edgeEndVertex.forEach((edge,endVertex)->{
-    			for(int j=0; j<deletePredicates.length; j++) {
-    				if(edge.equals(deletePredicates[j])) {
-    					this.graph.get(startVertex).remove(
-    							edge);
-    					
-    					if(this.graph.get(startVertex)==null) {
-    						removalStartVertex.put(
-    								startVertex, 1);
-    					}
+    			for(int j=0; j<deletePredicates.size(); j++) {
+    				if(edge.equals(deletePredicates.get(j))) {
+    					//this.graph.get(startVertex).remove(edge);
+    					removalEdge.put(startVertex, edge);
     					
     					break;
     				}
@@ -414,7 +468,19 @@ public class AdjacencyList {
     		});
     	});
     	
-    	//remove empty start vertex
+    	//delete removal edge
+    	removalEdge.forEach((startVertex,edge)->{
+    		this.graph.get(startVertex).remove(edge);
+    	});
+    	
+    	//find removal start vertex
+    	this.graph.forEach((startVertex,edgeEndvertex)->{
+    		if (this.graph.get(startVertex).isEmpty()) {
+				removalStartVertex.put(startVertex, 0);
+			}
+    	});
+    	
+    	//delete empty start vertex
     	removalStartVertex.forEach((startVertex,integer)->{
     		this.graph.remove(startVertex);
     	});

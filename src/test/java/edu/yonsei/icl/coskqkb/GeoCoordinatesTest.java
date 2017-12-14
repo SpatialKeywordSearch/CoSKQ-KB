@@ -4,17 +4,20 @@ public class GeoCoordinatesTest {
 
 	public static void main(String[] args) {
 		// TODO Auto-generated method stub
-		String readFileName = "dataset/YagoData/yagoGraph.txt";
-		String writeFileName = "dataset/YagoData/yagoGeoCoordinates.txt";
+		String readFileName = 
+				"dataset/YagoData/yagoGraph.txt";
+		String writeFileName = 
+				"dataset/YagoData/yagoGeoCoordinates.txt";
 		
-		AdjacencyList adjacencyList = new AdjacencyList();
-		adjacencyList.addFromTxt(readFileName);
+		long startTime = System.currentTimeMillis();
+
+		transformGraphToGeoCoordinates(readFileName, writeFileName);
 		
-		GeoCoordinates geoCoordinates = new GeoCoordinates();
-		geoCoordinates.createGeoCoordinates(adjacencyList);
-		geoCoordinates.writeToTxt(writeFileName);
-		
-		System.out.println(geoCoordinates.getNumberOfPlaceVertices());
+		long finishTime = System.currentTimeMillis();
+        long elapsedTime = 
+        		finishTime - startTime;
+		System.out.println("Geocoordinates generation time is..."
+				+ elapsedTime + " ms");
 		
 		/*AdjacencyList adjacencyList = new AdjacencyList();
 		adjacencyList.addFromTxt(readFileName);
@@ -26,5 +29,14 @@ public class GeoCoordinatesTest {
 		System.out.println("No. of vertices in geocoordinates..."
 				+ geoCoordinates.getNumberOfPlaceVertices());*/
 	}
-
+	
+	public static void transformGraphToGeoCoordinates(
+			String readFileName, String writeFileName) {
+		AdjacencyList adjacencyList = new AdjacencyList();
+		adjacencyList.addFromTxt(readFileName);
+		
+		GeoCoordinates geoCoordinates = new GeoCoordinates();
+		geoCoordinates.createGeoCoordinates(adjacencyList);
+		geoCoordinates.writeToTxt(writeFileName);
+	}
 }

@@ -5,7 +5,7 @@ import java.util.LinkedList;
 import com.github.davidmoten.rtree.geometry.Geometries;
 import com.github.davidmoten.rtree.geometry.Point;
 
-public class ISCKTest {
+public class MKSPTest {
 	static LinkedList<String> queryKeywords20;
 	static LinkedList<String> queryKeywords15;
 	static LinkedList<String> queryKeywords10;
@@ -23,16 +23,16 @@ public class ISCKTest {
 		
 		initializeQueryKeywords();
 		
-		ISCK isck = new ISCK();
+		MKSP mksp = new MKSP();
 		
 		long startLoadingDataTime = System.currentTimeMillis();
 		
 		if (knowledgeBaseName.equals("YAGO")) {
 			System.out.println("Start reading data from yago...");
-			isck.readDataFromYago();
+			mksp.readDataFromYago();
 		} else if (knowledgeBaseName.equals("DBpedia")) {
 			System.out.println("Start reading data from DBpedia...");
-			isck.readDataFromDBpedia();
+			mksp.readDataFromDBpedia();
 		}
         
 		long finishLoadingDataTime = System.currentTimeMillis();
@@ -42,20 +42,52 @@ public class ISCKTest {
 				+ "Data loading elapsed time is: "
 				+ dataLoadingTime + " ms.");
 		
-		executeQuery(isck, queryLocation, 
+		//varying k
+		executeQuery(mksp, queryLocation, 
 				queryKeywords10, 1, knowledgeBaseName);
-		executeQuery(isck, queryLocation, 
+		executeQuery(mksp, queryLocation, 
 				queryKeywords10, 3, knowledgeBaseName);
-		executeQuery(isck, queryLocation, 
+		executeQuery(mksp, queryLocation, 
 				queryKeywords10, 5, knowledgeBaseName);
-		executeQuery(isck, queryLocation, 
+		executeQuery(mksp, queryLocation, 
 				queryKeywords10, 8, knowledgeBaseName);
-		executeQuery(isck, queryLocation, 
+		executeQuery(mksp, queryLocation, 
 				queryKeywords10, 10, knowledgeBaseName);
-		executeQuery(isck, queryLocation, 
+		executeQuery(mksp, queryLocation, 
 				queryKeywords10, 15, knowledgeBaseName);
-		executeQuery(isck, queryLocation, 
+		executeQuery(mksp, queryLocation, 
 				queryKeywords10, 20, knowledgeBaseName);
+		
+		//varying #qk
+		/*executeQuery(mksp, queryLocation, 
+				queryKeywords5, 10, knowledgeBaseName);
+		executeQuery(mksp, queryLocation, 
+				queryKeywords8, 10, knowledgeBaseName);
+		executeQuery(mksp, queryLocation, 
+				queryKeywords10, 10, knowledgeBaseName);
+		executeQuery(mksp, queryLocation, 
+				queryKeywords15, 10, knowledgeBaseName);
+		executeQuery(mksp, queryLocation, 
+				queryKeywords20, 10, knowledgeBaseName);*/
+	}
+
+	public static void executeQuery(
+			MKSP mksp, Point queryLocation,
+			LinkedList<String> queryKeywords, int k,
+			String knowledgeBaseName) {
+		System.out.println("# of query keywords="
+				+ queryKeywords.size() + ", and k=" + k);
+		mksp.kVG = mksp.findTopkValidGroup(
+				queryLocation, queryKeywords, k,
+				knowledgeBaseName);
+		System.out.println("average ranking score of kVG is: "
+				+ mksp.calculateAverageRankingScoreOfkVG());
+		/*System.out.println("# of VG generation is: "
+				+ mksp.numberOfVGGeneration);*/
+		System.out.println("Number of result vg is: "
+				+ mksp.kVG.size());
+		System.out.println(mksp.kVG.toString());
+		System.out.println();
 	}
 
 	public static LinkedList<String> getQueryKeywords(
@@ -108,27 +140,6 @@ public class ISCKTest {
 		}
 		
 		return queryKeywords20;
-	}
-	
-	public static void executeQuery(
-			ISCK isck, Point queryLocation,
-			LinkedList<String> queryKeywords, int k,
-			String knowledgeBaseName) {
-		System.out.println("# of query keywords="
-				+ queryKeywords.size() + ", and k=" + k);
-		isck.kVG = isck.findTopkValidGroup(
-				queryLocation, queryKeywords, k,
-				knowledgeBaseName);
-		System.out.println("average ranking score of kVG is: "
-				+ isck.calculateAverageRankingScoreOfkVG());
-		System.out.println("# of VG generation is: "
-				+ isck.numberOfVGGeneration);
-		System.out.println("# of VGRS calculation is: "
-				+ isck.numberOfVGRSCalculation);
-		System.out.println("Number of result vg is: "
-				+ isck.kVG.size());
-		System.out.println(isck.kVG.toString());
-		System.out.println();
 	}
 	
 	public static void initializeQueryKeywords() {

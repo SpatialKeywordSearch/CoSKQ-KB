@@ -38,6 +38,7 @@ public class GeoCoordinates {
 					|| !this.vertexCoordinatesHash.get(
 						startVertex).containsKey("<hasLatitude>")) {
 					
+					//for YAGO
 					if(edge.equals("<hasLongitude>")
 							|| edge.equals("<hasLatitude>")) {
 						//process end vertex to get float value
@@ -48,8 +49,24 @@ public class GeoCoordinates {
 						}
 						
 						//add one of the coordinates w.r.t. a vertex
+						this.vertexCoordinatesHash.get(
+								startVertex).put(edge, endVertex);
+					}
+					
+					//for DBpedia
+					if (edge.equals(
+							"<http://www.georss.org/georss/point>")) {
+						if(endVertex.startsWith("\"")) {
+							endVertex = endVertex.substring(1);
+							endVertex = endVertex.substring(
+									0, endVertex.indexOf("\""));
+						}
+						
+						String[] latLong = endVertex.split("\\s+");
 						this.vertexCoordinatesHash.get(startVertex).put(
-								edge, endVertex);
+								"<hasLatitude>", latLong[0]);
+						this.vertexCoordinatesHash.get(startVertex).put(
+								"<hasLongitude>", latLong[1]);
 					}
 				}
 			});

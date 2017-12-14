@@ -60,6 +60,30 @@ public class QueryGenerator {
 		this.geoIndex.createRTree(geoCoordinates);
 	}
 	
+	public void readDataFromDBpedia() {
+		//input file paths
+		String folderName = "dataset/DBpediaData/";
+		/*String graphFileName = folderName +
+				"yagoGraph" + ".txt";*/
+		String subtreeInvertedIndexFileName = folderName +
+				"dbpediaSubTreeInvertedIndex" + ".txt";
+		/*String subtreeFileName = folderName +
+				"yagoSubTree" + ".txt";*/
+		/*String vertexInvertedIndexFileName = folderName +
+				"yagoVertexInvertedIndex" + ".txt";*/
+		String geoCoordinatesFileName = folderName +
+				"dbpediaGeoCoordinates" + ".txt";
+						
+		//reading input files
+		//this.adjacencyList.addFromTxt(graphFileName);
+		this.subtreeInvertedIndex.readFromTxt(
+				subtreeInvertedIndexFileName);
+		//this.subTree.readSubTreeFromTxt(subtreeFileName);
+		//this.vertexInvertedIndex.readFromTxt(vertexInvertedIndexFileName);
+		this.geoCoordinates.readFromTxt(geoCoordinatesFileName);
+		this.geoIndex.createRTree(geoCoordinates);
+	}
+	
 	public void nearestNeighborSearch(Point location,
 			double maxDiatance, int numberOfNN) {
 		Observable<Entry<String, Point>> NN =
@@ -146,10 +170,19 @@ public class QueryGenerator {
 		
 	public void generateQuery(Point location,
 			double maxDiatance, int numberOfNN, 
-			int numberOfKeywords, int valueOfK) {
+			int numberOfKeywords, int valueOfK,
+			String knowledgeBaseName) {
 		//read Yago data
-		System.out.println("Start reading data from yago...");
-		readDataFromYago();
+		if (knowledgeBaseName.equals("YAGO")) {
+			System.out.println("Start reading data from yago...");
+			readDataFromYago();
+		}
+		
+		//read Yago data
+		if (knowledgeBaseName.equals("DBpedia")) {
+			System.out.println("Start reading data from DBpedia...");
+			readDataFromDBpedia();
+		}		
 		
 		//get nearest neighbor hash
 		System.out.println("Start searching for NNs...");

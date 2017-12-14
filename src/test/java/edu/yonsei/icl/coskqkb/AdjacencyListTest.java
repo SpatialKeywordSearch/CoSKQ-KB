@@ -1,5 +1,6 @@
 package edu.yonsei.icl.coskqkb;
 
+import java.io.File;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -9,25 +10,25 @@ import org.apache.jena.vocabulary.OWL.Init;
 
 public class AdjacencyListTest {
 	public static void main(String args[]) {
-		String readFileName = 
-				"dataset/YagoData/yagoGraph_withSameAs.txt";
-        String writeFileName = 
-        		"dataset/YagoData/yagoGraph.txt";
-		String folderName = "dataset/YagoParsingData/";
-		/*String[] deletePredicates = 
-			{"<sameAs>","<linksTo>","<redirectTo>"};*/
-        
-    	AdjacencyList adjacencyList = new AdjacencyList();
-    	adjacencyList.addFromTxt(writeFileName);
-    	
-    	System.out.println("getNumberOfStartVertices: "
-    			+ adjacencyList.getNumberOfStartVertices());
-    	System.out.println("getNumberOfDistinctVertices: "
-    			+ adjacencyList.getNumberOfDistinctVertices());
-    	System.out.println("getNumberOfEdges: "
-    			+ adjacencyList.getNumberOfEdges());
-    	
-    	//adjacencyList.writeToTxt(writeFileName);
+		String knowledgeBaseName = "YAGO";
+		String readFileName =
+				"dataset/YagoGraph/yagoGeonamesData.txt";
+		String folderName =
+				"dataset/YagoGraph/";
+		String writeFileName =
+				"dataset/YagoData/yagoGraph.txt";
+		
+		AdjacencyList adjacencyList = new AdjacencyList();
+		long startTime = System.currentTimeMillis();
+		
+		adjacencyList.mergeTxtFiles(readFileName,
+				folderName, writeFileName);
+		
+        long finishTime = System.currentTimeMillis();
+        long elapsedTime = 
+        		finishTime - startTime;
+		System.out.println("Graph generation time is..."
+				+ elapsedTime + " ms");
     	
     	/*------------ Show statistics of a Graph file ------------*/
     	/*System.out.println("Number of start vertices is: "
@@ -46,30 +47,32 @@ public class AdjacencyListTest {
     	/*adjacencyList.mergeTxtFiles(readFileName, 
     			folderName, writeFileName);*/
     	
-		
-		/*------------ Parsing turtle file to txt file ------------*/
-		/*ArrayList<String> readFileArray =
-        		new ArrayList<String>();
-        readFileArray.add("dataset/Yago/yagoSources.ttl");
-        
-        ArrayList<String> writeFileArray =
-        		new ArrayList<String>();
-        writeFileArray.add("dataset/YagoGraph/yagoSources.txt");
-        
-        for(int i=0; i<readFileArray.size(); i++) {
-        	System.out.println("Start processing: " + readFileArray.get(i));
-        	
-        	AdjacencyList adjacencyList = new AdjacencyList();
-            adjacencyList.addFromTurtle(readFileArray.get(i));
-            System.out.println(adjacencyList.getNumberOfVertices());
-            System.out.println(adjacencyList.writeToTxt(writeFileArray.get(i)));
-            
-            //test readFromTxt function and justify the generated txt file
-            AdjacencyList adjacencyList2 = new AdjacencyList();
-            adjacencyList2.addFromTxt(writeFileArray.get(i));
-            System.out.println(adjacencyList2.getNumberOfVertices());
-            
-            System.out.println("Finish processing: " + readFileArray.get(i));
-        }*/
+	}
+	
+	public static void transformTurtleToTxt(String readFolderName,
+			String writeFolderName, String knowledgeBaseName) {
+		//get file names in the folder
+    	File folder = new File(readFolderName);
+    	String[] filesInFolder = folder.list();
+    	
+    	for(int i=0; i<filesInFolder.length; i++) {
+    		
+    		AdjacencyList adjacencyList = new AdjacencyList();
+        	System.out.println("Start processing: " 
+        			+ (i+1) + "th file..."
+        			+ filesInFolder[i]);
+        	String readFileName = readFolderName + filesInFolder[i];
+        	String writeFileName = writeFolderName + 
+        			filesInFolder[i].substring(0,
+        					filesInFolder[i].length()-4) + ".txt";
+        			
+        	//System.out.println("read from..." + readFileName);
+            adjacencyList.addFromTurtle(
+            		readFileName, knowledgeBaseName);
+            System.out.println("write to..." + writeFileName);
+            adjacencyList.writeToTxt(writeFileName);
+    	}
+    	
+    	System.out.println("All process finished!");
 	}
 }

@@ -3,7 +3,9 @@ package edu.yonsei.icl.coskqkb;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
-import java.util.List;
+import java.util.List;import org.apache.commons.lang3.builder.StandardToStringStyle;
+import org.apache.jena.sparql.function.library.leviathan.root;
+import org.apache.jena.tdb.store.Hash;
 
 import com.github.davidmoten.rtree.Entry;
 import com.github.davidmoten.rtree.fbs.generated.Geometry_;
@@ -12,7 +14,7 @@ import com.github.davidmoten.rtree.geometry.Point;
 
 import rx.Observable;
 
-public class ISCK {
+public class MKSP {
 	InvertedIndex subtreeInvertedIndex;
 	SubTree subTree;
 	InvertedIndex vertexInvertedIndex;
@@ -26,14 +28,14 @@ public class ISCK {
 	List<Entry<String, Point>> nearestNeighborList;
 	List<Entry<String, Point>> rspQdList;
 	boolean flag;
+	int count = 0;
 	int LSP;
 	int keywordRelevance;
 	HashMap< HashMap<String,Integer>,Double> validGroups;
 	int numberOfVGGeneration;
-	int numberOfVGRSCalculation;
 	double averageRankingScoreOfkVG;
 	
-	public ISCK() {
+	public MKSP() {
 		this.subtreeInvertedIndex = new InvertedIndex();
 		this.subTree = new SubTree();
 		this.vertexInvertedIndex = new InvertedIndex();
@@ -44,157 +46,9 @@ public class ISCK {
 				new HashMap< HashMap<String,Integer>,Double>();
 	}
 	
-	public HashMap<HashMap<String,Integer>,Double> 
-				findTopkValidGroup(Point queryLocation,
-						LinkedList<String> queryKeywords, 
-						int k,
-						String knowledBaseName) {
-			
-			//long startTime = System.currentTimeMillis();
-	
-			initialize(knowledBaseName);
-			
-			/*long finishTime = System.currentTimeMillis();
-	        long elapsedTime = 
-	        		finishTime - startTime;
-			System.out.println("Initialization time is..."
-					+ elapsedTime + " ms");*/
-			
-			long startBCKTime = System.currentTimeMillis();
-			//pruning rule 1
-			//System.out.println("pruning unrelevant sub-trees...");
-			unrelevantSubtreePruning(queryKeywords);
-			
-			//initialize RSP_qd
-			SubTree RSP = this.subTree;
-			int sizeOfRSP = RSP.subTreeHash.size();
-			System.out.println("size of RSP is: "
-					+ sizeOfRSP);
-			
-			//get NNs w.r.t the query location (to be optimized)
-			//System.out.println("get NNs w.r.t the query location...");
-			Observable<Entry<String, Point>> NN =
-					this.geoIndex.rTree.nearest(queryLocation, 
-							Double.MAX_VALUE,
-							Integer.MAX_VALUE);
-			
-			//pruning rule 2
-			this.nearestNeighborList = 
-					NN.filter(entry-> RSP.subTreeHash.containsKey(
-							entry.value()))
-					.toList().toBlocking().single();
-			
-			//move the first two NNs to rsp_qd list
-			this.rspQdList = new ArrayList<Entry<String, Point>>();
-			
-			this.rspQdList.add(this.nearestNeighborList.get(0));
-			this.nearestNeighborList.remove(0);
-			
-			this.rspQdList.add(this.nearestNeighborList.get(0));
-			this.nearestNeighborList.remove(0);
-			
-			//System.out.println("Start while loop...");
-			while(!nearestNeighborList.isEmpty()) {
-				Entry<String, Point> rsp_qd =
-						this.rspQdList.get(
-								this.rspQdList.size()-1);
-				
-				//lemma 2
-				double distanceQd = euclideanDistance(
-						rsp_qd.geometry(), queryLocation);
-					
-				double upperBoundForQDB = dynamicConstraintForQDB(
-						rsp_qd, queryKeywords);
-				if (distanceQd>upperBoundForQDB) {
-					//System.out.println(nearestNeighborList.size());
-					this.nearestNeighborList.clear();
-				} else {
-					List<Entry<String, Point>> RSP_qd =
-							this.rspQdList;
-					
-					for(int i=0; i<RSP_qd.size(); i++) {
-						Entry<String, Point> rsp_pi =
-								RSP_qd.get(i);
-						
-						for(int j=i+1; j<RSP_qd.size(); j++) {
-							Entry<String, Point> rsp_pj =
-									RSP_qd.get(j);
-							
-							double distancePd = euclideanDistance(
-									rsp_pi.geometry(), 
-									rsp_pj.geometry());
-							
-							//lemma 3
-							if (this.kVG.size()>k) {
-								double upperBoundForPDB = 
-										dynamicConstraintForPDB(
-										distancePd,	rsp_qd, rsp_pi,
-										queryKeywords, queryLocation);
-								if (distancePd<distanceQd
-										|| distancePd>upperBoundForPDB) {
-									continue;
-								}
-							}
-							
-							//pruning rule 3
-							/*System.out.println("pairwise distance bound "
-									+ "based pruning...");*/
-							List<Entry<String, Point>> RSP_vg = 
-									pairwiseDistanceBoundBasedPruning(
-									rsp_pi, rsp_pj, RSP_qd, queryLocation);
-							
-							HashMap< HashMap<String,Integer>,
-								Double> newValidGroups = 
-								new HashMap< HashMap<String,Integer>,
-								Double>();
-							
-							//compose valid groups
-							//System.out.println("compose new valid groups...");
-							newValidGroups = composeValidGroup(
-									distanceQd, distancePd,
-									rsp_qd, rsp_pi, rsp_pj,
-									RSP_vg, queryKeywords, k);
-							numberOfVGGeneration++;
-							
-							//calculate ranking score
-							//System.out.println("calculate ranking socre...");
-							if (!newValidGroups.isEmpty()) {
-								newValidGroups = calculateRankingScore(
-										newValidGroups, queryLocation, 
-										queryKeywords, rsp_qd, rsp_pi,
-										rsp_pj);
-								numberOfVGRSCalculation++;
-							}
-							
-							//maintain top-k valid groups
-							if (!newValidGroups.isEmpty()) {
-								//System.out.println("maintain top-k vgs...");
-								maintainTopkValidGroups(k, 
-										newValidGroups);
-							}
-						}
-					}
-					
-					moveToNextRspQd();
-				}
-			}
-			
-			long finishBCKTime = System.currentTimeMillis();
-		    long bckExecutionTime = 
-		    		finishBCKTime - startBCKTime;
-		    System.out.println("value of k is: " + k);
-			System.out.println("ISCK elapsed time is: "
-					+ bckExecutionTime + " ms.");
-			System.out.println("size of RSP is: "
-					+ sizeOfRSP);
-			
-			return this.kVG;
-		}
-
 	public void initialize(String knowledgeBaseName) {
 		this.averageRankingScoreOfkVG = 0;
 		this.numberOfVGGeneration = 0;
-		this.numberOfVGRSCalculation = 0;
 		this.spatialDistance = -1;
 		this.rankingScore = -1;
 		this.kVG = new HashMap<HashMap<String,Integer>,Double>();
@@ -227,6 +81,270 @@ public class ISCK {
 		this.subTree.readSubTreeFromTxt(subtreeFileName);
 	}
 	
+	public HashMap<HashMap<String,Integer>,Double> 
+			findTopkValidGroup(Point queryLocation,
+					LinkedList<String> queryKeywords, 
+					int k,
+					String knowledBaseName) {
+		
+		initialize(knowledBaseName);
+		
+		long startBCKTime = System.currentTimeMillis();
+		//pruning rule 1
+		//System.out.println("pruning unrelevant sub-trees...");
+		unrelevantSubtreePruning(queryKeywords);
+		
+		//initialize RSP_qd
+		SubTree RSP = this.subTree;
+		int sizeOfRSP = RSP.subTreeHash.size();
+		/*System.out.println("size of RSP is: "
+				+ sizeOfRSP);*/
+		
+		//get NNs w.r.t the query location (to be optimized)
+		//System.out.println("get NNs w.r.t the query location...");
+		Observable<Entry<String, Point>> NN =
+				this.geoIndex.rTree.nearest(queryLocation, 
+						Double.MAX_VALUE,
+						Integer.MAX_VALUE);
+		
+		//pruning rule 2
+		this.nearestNeighborList = 
+				NN.filter(entry-> RSP.subTreeHash.containsKey(
+						entry.value()))
+				.toList().toBlocking().single();
+		
+		//generate k valid groups
+		for (int indexOfK=0; indexOfK<k; indexOfK++) {
+			LinkedList<Entry<String, Point>> rootList = 
+					findOneValidGroup(queryKeywords.size()-1,
+							queryKeywords);
+			
+			if (rootList==null) {
+				break;
+			}
+			
+			HashMap<String,Integer> validGroup =
+					new HashMap<String,Integer>();
+			
+			for(int i=0; i<rootList.size(); i++) {
+				validGroup.put(rootList.get(i).value(), 0);
+			}
+			
+			double distanceQd = 0;
+			double distancePd = 0;
+			
+			for(int i=0; i<rootList.size(); i++) {
+				double distance = euclideanDistance(queryLocation, 
+						rootList.get(i).geometry());
+				if (distanceQd<distance) {
+					distanceQd = distance;
+				}
+			}
+			
+			for (int i=0; i<rootList.size(); i++) {
+				for (int j=i+1; j<rootList.size(); j++) {
+					double distance = euclideanDistance(rootList.get(i).geometry(),
+							rootList.get(j).geometry());
+							
+					if (distancePd<distance) {
+						distancePd=distance;
+					}
+				}
+			}
+			
+			double spatialDistance = 
+					distanceQd + (validGroup.size()-1)*distancePd;
+			
+			double keywordRelevance = 
+					calculateKeywordRelevance(
+							validGroup, queryKeywords);
+			
+			double rankingScore = keywordRelevance*spatialDistance;
+			
+			this.kVG.put(validGroup, rankingScore);
+			
+			Entry<String, Point> removalEntry = rootList.get(0);
+			this.nearestNeighborList.remove(removalEntry);
+		}
+		
+		//finish processing...
+		long finishBCKTime = System.currentTimeMillis();
+	    long bckExecutionTime = 
+	    		finishBCKTime - startBCKTime;
+	    //System.out.println("value of k is: " + k);
+		System.out.println("m-kSP elapsed time is: "
+				+ bckExecutionTime + " ms.");
+		System.out.println("size of RSP is: "
+				+ sizeOfRSP);
+		
+		return this.kVG;
+	}
+	
+	public LinkedList<Entry<String, Point>> findOneValidGroup(
+			int numOfIter, LinkedList<String> queryKeywords) {
+		LinkedList<Entry<String, Point>> result = 
+				new LinkedList<Entry<String, Point>>();
+		
+		if(numOfIter < (queryKeywords.size()/2))
+		{
+			return null;
+		}
+		
+		HashMap<Integer, LinkedList<String>>
+			partOfKeywordsHash = selectSubkeywords(
+					numOfIter, queryKeywords);
+		HashMap<Entry<String, Point>, LinkedList<String>> 
+		rootUncoverdKeywords = findSP(
+				partOfKeywordsHash, queryKeywords);
+		
+		if(rootUncoverdKeywords.isEmpty()) {
+			result = findOneValidGroup(numOfIter-1, queryKeywords);
+		}
+		
+		else
+		{
+			for(java.util.Map.Entry<Entry<String, Point>,
+					LinkedList<String>> entry : rootUncoverdKeywords.entrySet()) {
+			    Entry<String, Point> key = entry.getKey();
+			    LinkedList<String> value = entry.getValue();
+			    result.add(key);
+		    	
+			    if(value.isEmpty())
+			    {
+			    	return result;
+			    }
+			    else {
+			    	result.addAll(findOneValidGroup(
+			    			value.size(), value));
+			    }
+			}	
+			return result;
+		}
+		return null;
+	}
+
+	public HashMap<Entry<String, Point>, LinkedList<String>> findSP(
+			HashMap<Integer, LinkedList<String>> partOfKeywordsHash, 
+			LinkedList<String> querykeywords) {
+		
+		HashMap<Entry<String, Point>, LinkedList<String>> rootUnCoveredKeywords = new HashMap<Entry<String, Point>, LinkedList<String>>();;
+		
+		for (int i = 0; i < partOfKeywordsHash.size(); i++) {
+			//get a keyword list
+			LinkedList<String> partOfKeywordsList =
+					partOfKeywordsHash.get(i);
+			
+			//generate term vertex hash
+			HashMap<String, HashMap<String,Integer>> partOfTermVertexHash =
+					new HashMap<String, HashMap<String,Integer>>();
+			for(int j=0; j<partOfKeywordsList.size(); j++) {
+				String keyword = partOfKeywordsList.get(j);
+				if (this.subtreeInvertedIndex.termVertexHash.containsKey(
+						keyword)) {
+					partOfTermVertexHash.put(keyword, 
+							this.subtreeInvertedIndex.termVertexHash.get(
+									keyword));
+				}
+			}
+			Entry<String, Point> entry = null;
+			LinkedList<String> unCoveredKeywords = null;
+			
+			for(int k=0; k < this.nearestNeighborList.size(); k++) {
+				entry = this.nearestNeighborList.get(k);
+				String root = entry.value();
+				count = 0;
+				partOfTermVertexHash.forEach((term, vertexHash)->{
+					if(vertexHash.containsKey(root)) {
+						count++;
+					}
+				});
+				if(count == partOfTermVertexHash.size()) {
+					break;
+				}
+			}
+			
+			unCoveredKeywords = getUnCoverdKeywords(querykeywords, partOfKeywordsList); 
+						
+			rootUnCoveredKeywords.put(entry, unCoveredKeywords);
+		}
+		
+		return rootUnCoveredKeywords;
+	}
+	
+	public LinkedList<String> getUnCoverdKeywords(LinkedList<String> querykeywords, LinkedList<String> partOfKeywordsList) {
+		
+		LinkedList<String> unCoveredKeywords = new LinkedList<String>();
+		for(int i=0; i<querykeywords.size();i++) {
+			String keyword = querykeywords.get(i);
+			if(!partOfKeywordsList.contains(keyword)) {
+				unCoveredKeywords.add(keyword);
+			}
+		}
+		return unCoveredKeywords;
+	}
+	
+	public HashMap<Integer,LinkedList<String>> 
+		selectSubkeywords(
+				int r, LinkedList<String> querykeywords)
+    {
+       LinkedList<String> tempResult;
+       HashMap<Integer,LinkedList<String>> result = new HashMap<Integer,LinkedList<String>>(); 
+       int length = querykeywords.size();
+       
+       if(r>length){
+          System.out.println("Invalid input, r > n");
+          return null;
+       }
+       
+       int combination[] = new int[r];
+       int i = 0;
+       int index = 0;
+       int resultIndex = 0;         //index number
+       
+       while(i>=0)
+       {
+          if(index <= (length + (i-r)))
+          {
+             combination[i] = index;
+             if(i == r-1)
+             {
+                tempResult = new LinkedList<String>();
+                for(int j =0; j<combination.length; j++)
+                {
+                   tempResult.add(querykeywords.get(combination[j]));
+                }
+                result.put(resultIndex, tempResult);
+                resultIndex++;
+                index++;
+             }
+             else
+             {
+                index = combination[i]+1;
+                i++;
+             }
+          }
+          else
+          {
+             i--;
+             if(i>0)
+                index = combination[i]+1;
+             else
+                index = combination[0]+1;
+          }
+       }
+       return result;
+       
+    }
+	
+	public double calculateAverageRankingScoreOfkVG() {
+		
+		this.kVG.forEach((vg,score)->{
+			averageRankingScoreOfkVG += score;
+		});
+		
+		return averageRankingScoreOfkVG/this.kVG.size();
+	}
+
 	public void readDataFromYago() {
 		//input file paths
 		String folderName = "dataset/YagoData/";
@@ -280,84 +398,7 @@ public class ISCK {
 		System.out.println("creating r*-tree...");
 		this.geoIndex.createRTree(this.geoCoordinates);
 	}
-
-	public double dynamicConstraintForQDB(
-			Entry<String, Point> rsp_qd,
-			LinkedList<String> queryKeywords) {
-		
-		/*if (this.rspQdLSP == -1) {
-			this.rspQdLSP = calculateLSP(rsp_qd,queryKeywords);
-		}*/
-		double rspQdLSP = 0;
-		
-		return this.delta/(rspQdLSP+1);
-	}
 	
-	public double dynamicConstraintForPDB(
-			double distanceQd,
-			Entry<String, Point> rsp_qd,
-			Entry<String, Point> rsp_pi,
-			LinkedList<String> queryKeywords,
-			Point queryLocation) {
-
-		/*if (this.rspQdLSP == -1) {
-			this.rspQdLSP = calculateLSP(rsp_qd,queryKeywords);
-		}*/
-		double rspQdLSP = 0;
-		
-		/*if (this.rspPiLSP == -1) {
-			this.rspPiLSP = calculateLSP(rsp_pi,queryKeywords);
-		}*/
-		double rspPiLSP = 0;
-				
-		double upperBound = 
-				((delta/(rspQdLSP+rspPiLSP+1))
-						-distanceQd)/2;
-		
-		return upperBound;
-	}
-	
-	public double dynamicConstraintForCardinality(
-			double distanceQd, double distancePd,
-			Entry<String, Point> rsp_qd, 
-			Entry<String, Point> rsp_pi, 
-			Entry<String, Point> rsp_pj, 
-			LinkedList<String> queryKeywords) {
-		
-		double upperBound = 0;
-		
-		/*if (this.rspQdLSP == -1) {
-			this.rspQdLSP = calculateLSP(rsp_qd, queryKeywords);
-		}*/
-		double rspQdLSP = 0;
-		/*if (this.rspPiLSP == -1) {
-			this.rspPiLSP = calculateLSP(rsp_pi, queryKeywords);
-		}*/
-		double rspPiLSP = 0;
-		/*if (this.rspPjLSP == -1) {
-			this.rspPjLSP = calculateLSP(rsp_pi, queryKeywords);
-		}*/
-		
-		double rspPjLSP = 0;
-		double kr = rspQdLSP + rspPiLSP 
-						+ rspPjLSP + 1;
-		
-		upperBound = 
-				(((this.delta/kr)-distanceQd)/
-						distancePd)+1;
-		
-		return upperBound;
-	}
-	
-	public double calculateAverageRankingScoreOfkVG() {
-		
-		this.kVG.forEach((vg,score)->{
-			averageRankingScoreOfkVG += score;
-		});
-		
-		return averageRankingScoreOfkVG/this.kVG.size();
-	}
-
 	public void unrelevantSubtreePruning(
 			LinkedList<String> queryKeywords) {
 		HashMap<String, Integer> removalHash =
@@ -480,13 +521,11 @@ public class ISCK {
 	
 	public HashMap<HashMap<String,Integer>, Double> 
 			composeValidGroup(
-					double distanceQd, double distancePd,
 					Entry<String, Point> rsp_qd,
 					Entry<String, Point> rsp_pi,
 					Entry<String, Point> rsp_pj,
 					List<Entry<String, Point>> RSP_vg,
-					LinkedList<String> queryKeywords,
-					int k) {
+					LinkedList<String> queryKeywords) {
 		
 		HashMap<HashMap<String,Integer>, Double> generatedValidGroups =
 				new HashMap<HashMap<String,Integer>, Double>();
@@ -578,20 +617,10 @@ public class ISCK {
 		HashMap<HashMap<String,Integer>, Double> newValidGroups =
 				new HashMap<HashMap<String,Integer>, Double>();
 		
-		double upperBoundForCardinality = 
-				dynamicConstraintForCardinality(
-				distanceQd, distancePd,
-				rsp_qd, rsp_pi, rsp_pj, queryKeywords);
-		
 		generatedValidGroups.forEach((key,value)->{
 			if (!this.validGroups.containsKey(key)) {
-				if (this.kVG.size()<k) {
-					this.validGroups.put(key, value);
-					newValidGroups.put(key, value);
-				} else if (key.size()<upperBoundForCardinality) {
-					this.validGroups.put(key, value);
-					newValidGroups.put(key, value);
-				}
+				this.validGroups.put(key, value);
+				newValidGroups.put(key, value);
 			}
 		});
 		
@@ -689,16 +718,18 @@ public class ISCK {
 			if (this.kVG.size()<k) {
 				this.kVG.put(validGroup, score);
 				
-				//update delta and deltaValidGroup
-				delta = 0;
-				this.deltaValidGroup = new HashMap<String,Integer>();
+				//if kVG is full, calculate delta and deltaValidGroup
+				if (this.kVG.size()==k) {
+					delta = 0;
+					this.deltaValidGroup = new HashMap<String,Integer>();
 					
-				this.kVG.forEach((key,value)->{
-					if (delta<value) {
-						delta = value;
-						this.deltaValidGroup = key;
-					}
-				});
+					this.kVG.forEach((key,value)->{
+						if (delta<value) {
+							delta = value;
+							this.deltaValidGroup = key;
+						}
+					});
+				}
 			} else if (delta>score) {
 				this.kVG.remove(this.deltaValidGroup);
 				this.kVG.put(validGroup, score);
@@ -706,7 +737,7 @@ public class ISCK {
 				//update delta and deltaValidGroup
 				delta = 0;
 				this.deltaValidGroup = new HashMap<String,Integer>();
-					
+				
 				this.kVG.forEach((key,value)->{
 					if (delta<value) {
 						delta = value;
@@ -715,5 +746,6 @@ public class ISCK {
 				});
 			}
 		});
+		
 	}
 }

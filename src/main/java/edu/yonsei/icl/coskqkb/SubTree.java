@@ -17,6 +17,7 @@ public class SubTree {
 	static BufferedReader br;
 	static int countingNumber;
 	static int depth;
+	static double totalPostingListLength;
 	HashMap<String, Integer> fatherVertexList;
 	HashMap<String, Integer> sonVertexList;
 
@@ -27,6 +28,16 @@ public class SubTree {
 				HashMap<String, Integer>>();
 		this.subTreeHash = new HashMap<String, 
 				HashMap<String, Integer>>();
+	}
+	
+	public double getAveragePostingListLength() {
+		totalPostingListLength = 0;
+		
+		rootKeywordHash.forEach((root,keywordHash)->{
+			totalPostingListLength += keywordHash.size();
+		});
+		
+		return totalPostingListLength/rootKeywordHash.size();
 	}
 	
 	public HashMap<String, Integer> getSonVertexList(
@@ -43,8 +54,14 @@ public class SubTree {
 		edgeEndVertexHash.forEach((edge,endVertex)->{
 			//add non-label, non-coordinates end vertices
 			if(!edge.equals("rdfs:label")
-					&& !edge.equals("<hasLongitude>")
-					&& !edge.equals("<hasLatitude>")) {
+				&& !edge.equals("<hasLongitude>")
+				&& !edge.equals("<hasLatitude>")
+				&& !edge.equals(
+					"<http://www.w3.org/2003/01/geo/wgs84_pos#lat>")
+				&& !edge.equals(
+					"<http://www.w3.org/2003/01/geo/wgs84_pos#long>")
+				&& !edge.equals(
+					"<http://www.georss.org/georss/point>")) {
 				
 				if (!endVertex.startsWith("\"")
 					&& !endVertex.equals("")
@@ -66,24 +83,30 @@ public class SubTree {
 		this.subTreeHash.put(root, tempHash);
 		
 		depth = 0;
-		this.fatherVertexList = getSonVertexList(root, adjacencyList);
+		this.fatherVertexList = getSonVertexList(root,
+				adjacencyList);
 		//while son list is not null
 		while(this.fatherVertexList!=null) {
 			depth++;
 			this.sonVertexList = new HashMap<String, Integer>();
 			
-			this.fatherVertexList.forEach((currentFather, integer)->{
+			this.fatherVertexList.forEach(
+					(currentFather, integer)->{
 				//add current father to the subtree
-				this.subTreeHash.get(root).put(currentFather, depth);
+				this.subTreeHash.get(root).put(currentFather, 
+						depth);
 				
 				//add sons of the current father to son list
 				HashMap<String, Integer> tempInnerHash =
 						new HashMap<String, Integer>();
-				tempInnerHash = getSonVertexList(currentFather, adjacencyList);
+				tempInnerHash = getSonVertexList(currentFather,
+						adjacencyList);
 				
 				if (tempInnerHash!=null) {
-					tempInnerHash.forEach((currentSon,innerInteger)->{
-						if(this.sonVertexList.containsKey(currentSon)) {
+					tempInnerHash.forEach(
+							(currentSon,innerInteger)->{
+						if(this.sonVertexList.containsKey(
+								currentSon)) {
 							this.sonVertexList.put(currentSon,0);
 						}
 					});
@@ -93,6 +116,8 @@ public class SubTree {
 			//update father list for next depth loop
 			if(!this.sonVertexList.isEmpty()) {
 				this.fatherVertexList = this.sonVertexList;
+			} else {
+				this.fatherVertexList = null;
 			}
 		}
 	}
@@ -109,6 +134,22 @@ public class SubTree {
 		//add keywords contained in start vertex itself
 		String startVertexLine = startVertex.substring(1, 
 				startVertex.indexOf(">"));
+		
+		/*if (startVertex.equals(
+				"<http://dbpedia.org/resource/Hoài_Nhơn_District>")) {
+			System.out.println("founded");
+		}*/
+		
+		//delete http://.../
+		int index = startVertexLine.lastIndexOf('/');
+			
+		if (index!=-1) {
+			startVertexLine = startVertexLine.substring(index+1);
+		}
+			
+		startVertexLine = startVertexLine.replaceAll(",", "");
+		startVertexLine = startVertexLine.replaceAll("\\?", "_");
+		
 		String[] startVertexKeywords = startVertexLine.split("_");
 		for(int i=0; i<startVertexKeywords.length; i++) {
 			String term = startVertexKeywords[i];
@@ -124,7 +165,9 @@ public class SubTree {
 					adjacencyList.graph.get(startVertex);
 			
 			edgeEndvertexList.forEach((edge,endVertex)->{
-				if(edge.equals("rdfs:label")) {
+				if(edge.equals("rdfs:label")
+					|| edge.equals(
+					"<http://www.w3.org/2000/01/rdf-schema#label>")) {
 					//preprocessing end vertex
 					if (endVertex.startsWith("\"")) {
 						endVertex = endVertex.substring(1);
@@ -135,6 +178,9 @@ public class SubTree {
 							endVertex = endVertex.substring(
 									0, indexOfDoubleQuotes);
 						}
+						
+						endVertex = endVertex.replaceAll(",", "");
+						endVertex = endVertex.replaceAll("\\?", " ");
 					}
 					
 					String[] termArray = endVertex.split("\\s+");
@@ -172,9 +218,10 @@ public class SubTree {
 				//if the vertex keyword is new,
 				//add it to root keyword
 				rootKeywords.forEach((keyword,integer)->{
-					if(!this.rootKeywordHash.get(root).containsKey(
-							keyword)) {
-						this.rootKeywordHash.get(root).put(keyword,0);
+					if(!this.rootKeywordHash.get(
+							root).containsKey(keyword)) {
+						this.rootKeywordHash.get(root).put(
+								keyword,0);
 					}
 				});
 			}
@@ -188,9 +235,10 @@ public class SubTree {
 					//if the vertex keyword is new,
 					//add it to root keyword
 					vertexKeywords.forEach((keyword,integer)->{
-						if(!this.rootKeywordHash.get(root).containsKey(
-								keyword)) {
-							this.rootKeywordHash.get(root).put(keyword,0);
+						if(!this.rootKeywordHash.get(
+								root).containsKey(keyword)) {
+							this.rootKeywordHash.get(
+									root).put(keyword,0);
 						}
 					});
 				}
@@ -200,24 +248,28 @@ public class SubTree {
 		deleteEmptyRootKeyword();
 	}
 	
-	public void createSubTreeFromGraph(AdjacencyList adjacencyList) {
-		this.subTreeHash = new HashMap<String, HashMap<String, Integer>>();
+	public void createSubTreeFromGraph(
+			AdjacencyList adjacencyList) {
+		this.subTreeHash = 
+				new HashMap<String, HashMap<String, Integer>>();
 		
-		//countingNumber=0;		
-		adjacencyList.graph.forEach((startVertex, edgeEndVertexList)->{
-			/*countingNumber++;
+		countingNumber=0;		
+		adjacencyList.graph.forEach(
+				(startVertex, edgeEndVertexList)->{
+			countingNumber++;
 			
 			if (countingNumber%100000==0) {
 				System.out.println("Current processing line is..."
 						+ countingNumber);
-			}*/
+			}
 			
 			createSubTreeFromGraph(startVertex, adjacencyList);
 		});
 		
 		adjacencyList.vertexHash.forEach((vertex,isPlace)->{
 			if(vertex.startsWith("<")) {
-				createVertexKeywordFromGraph(vertex, adjacencyList);
+				createVertexKeywordFromGraph(
+						vertex, adjacencyList);
 			}
 		});
 		

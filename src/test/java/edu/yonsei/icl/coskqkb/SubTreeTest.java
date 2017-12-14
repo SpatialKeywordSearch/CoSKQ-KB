@@ -5,6 +5,7 @@ public class SubTreeTest {
 	
 	public static void main(String[] args) {
 		// TODO Auto-generated method stub
+		//String knowledgeBaseName = "YAGO";
 		String readFileName = 
 				"dataset/YagoData/yagoGraph.txt";
 		String writeSubTreeFileName =
@@ -14,16 +15,22 @@ public class SubTreeTest {
 		String writeRootKeywordFileName =
 				"dataset/YagoData/yagoSubTreeKeyword.txt";
 		
-		/*AdjacencyList adjacencyList = new AdjacencyList();
-		System.out.println("Start reading graph from..."
-				+ readFileName);
-		adjacencyList.addFromTxt(readFileName);
-		System.out.println("Finish reading graph");*/
+		long startTime = System.currentTimeMillis();
 		
-		SubTree subTree1 = new SubTree();
-		subTree1.readSubTreeFromTxt(writeSubTreeFileName);
+		transformGraphToTxt(readFileName,
+				writeSubTreeFileName, writeVertexKeywordFileName,
+				writeRootKeywordFileName);
 		
-		maxDepth = 0;
+        long finishTime = System.currentTimeMillis();
+        long elapsedTime = 
+        		finishTime - startTime;
+		System.out.println("Subtree generation time is..."
+				+ elapsedTime + " ms");
+		
+		
+		
+		
+		/*maxDepth = 0;
 		subTree1.subTreeHash.forEach((root,vertexHash)->{
 			vertexHash.forEach((vertex,depth)->{
 				if(maxDepth<depth) {
@@ -32,7 +39,7 @@ public class SubTreeTest {
 			});
 		});
 		
-		System.out.println("max depth is..." + maxDepth);
+		System.out.println("max depth is..." + maxDepth);*/
 		
 		/*System.out.println("Start creating sub-trees...");
 		long startTime = System.currentTimeMillis();
@@ -71,19 +78,35 @@ public class SubTreeTest {
         		+ subTree2.vertexKeywordHash.size()
         		+ " \nNo. of roots: "
         		+ subTree2.rootKeywordHash.size());*/
-        
-        /*-- Write to txt files --*/
-        System.out.println("Start write sub-tree to..."
-        		+ writeSubTreeFileName);
-		subTree1.writeSubTreeToTxt(writeSubTreeFileName);
-		
-		System.out.println("Start write vertex keyword to..."
-				+ writeVertexKeywordFileName);
-		subTree1.writeVertexKeywordToTxt(writeVertexKeywordFileName);
-		
-		System.out.println("Start write root keyword to..."
-				+ writeRootKeywordFileName);
-		subTree1.writeRootKeywordToTxt(writeRootKeywordFileName);
 	}
 
+	public static void transformGraphToTxt(
+			String readFileName, String writeSubTreeFileName,
+			String writeVertexKeywordFileName,
+			String writeRootKeywordFileName) {
+		
+		System.out.println("Start reading graph...");
+		AdjacencyList adjacencyList = new AdjacencyList();
+		adjacencyList.addFromTxt(readFileName);
+		
+		//System.out.println(adjacencyList.graph.size());
+		
+		System.out.println("Start creating sub-tree from graph...");
+		SubTree subTree = new SubTree();
+		subTree.createSubTreeFromGraph(
+				adjacencyList);
+		
+		/*-- Write to txt files --*/
+        System.out.println("Start writing sub-tree to..."
+        		+ writeSubTreeFileName);
+		subTree.writeSubTreeToTxt(writeSubTreeFileName);
+		
+		System.out.println("Start writing vertex keyword to..."
+				+ writeVertexKeywordFileName);
+		subTree.writeVertexKeywordToTxt(writeVertexKeywordFileName);
+		
+		System.out.println("Start writing root keyword to..."
+				+ writeRootKeywordFileName);
+		subTree.writeRootKeywordToTxt(writeRootKeywordFileName);
+	}
 }

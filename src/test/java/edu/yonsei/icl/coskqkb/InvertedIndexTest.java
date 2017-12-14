@@ -8,15 +8,18 @@ public class InvertedIndexTest {
 		String writeFileName =
 				"dataset/YagoData/yagoSubTreeInvertedIndex.txt";
 		
+		long startTime = System.currentTimeMillis();
+		
+		transformToInvertedIndex(readFileName, writeFileName);
+		
+		long finishTime = System.currentTimeMillis();
+        long elapsedTime = 
+        		finishTime - startTime;
+		System.out.println("Inverted index generation time is..."
+				+ elapsedTime + " ms");
+		
 		/*AdjacencyList adjacencyList = new AdjacencyList();
 		adjacencyList.addFromTxt(readFileName);*/
-		
-		InvertedIndex invertedIndex = new InvertedIndex();
-		
-		invertedIndex.readFromTxt(writeFileName);
-		
-		System.out.println(invertedIndex.termVertexHash.get(
-				"Vişăului").size());
 		
 		/*System.out.println("Strat creating invertex index from..."
 				+ readFileName);
@@ -58,4 +61,10 @@ public class InvertedIndexTest {
 				+ writeFileName);*/
 	}
 
+	public static void transformToInvertedIndex(
+			String readFileName, String writeFileName) {
+		InvertedIndex invertedIndex = new InvertedIndex();
+		invertedIndex.createFromTxt(readFileName);
+		invertedIndex.writeToTxt(writeFileName);
+	}
 }
