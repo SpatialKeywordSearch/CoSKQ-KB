@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
+import java.util.PrimitiveIterator.OfDouble;
 
 import com.github.davidmoten.rtree.Entry;
 import com.github.davidmoten.rtree.fbs.generated.Geometry_;
@@ -24,7 +26,7 @@ public class BCK {
 	double delta;
 	HashMap<String, Integer> deltaValidGroup;
 	List<Entry<String, Point>> nearestNeighborList;
-	List<Entry<String, Point>> rspQdList;
+	LinkedList<Entry<String, Point>> rspQdList;
 	boolean flag;
 	int LSP;
 	int keywordRelevance;
@@ -44,7 +46,8 @@ public class BCK {
 				new HashMap< HashMap<String,Integer>,Double>();
 	}
 	
-	public void initialize(String knowledgeBaseName) {
+	public void initialize(String knowledgeBaseName,
+			int maxDepthBound) {
 		this.averageRankingScoreOfkVG = 0;
 		this.numberOfVGGeneration = 0;
 		this.spatialDistance = -1;
@@ -55,7 +58,7 @@ public class BCK {
 		this.nearestNeighborList = 
 				new ArrayList<Entry<String, Point>>();
 		this.rspQdList =
-				new ArrayList<Entry<String, Point>>();
+				new LinkedList<Entry<String, Point>>();
 		this.flag = false;
 		this.LSP = Integer.MAX_VALUE;
 		this.keywordRelevance = 1;
@@ -69,10 +72,12 @@ public class BCK {
 		String subtreeFileName = "";
 		
 		if (knowledgeBaseName.equals("YAGO")) {
-			subtreeFileName = "dataset/YagoData/yagoSubTree.txt";
+			subtreeFileName = "dataset/YagoData/yagoSubTree"
+					+ maxDepthBound + ".txt";
 		}else if (knowledgeBaseName.equals("DBpedia")) {
 			subtreeFileName = 
-					"dataset/DBpediaData/dbpediaSubTree.txt";
+					"dataset/DBpediaData/dbpediaSubTree"
+					+ maxDepthBound + ".txt";
 		}
 		
 		//System.out.println("reading sub-tree...");
@@ -84,21 +89,22 @@ public class BCK {
 					Point queryLocation,
 					LinkedList<String> queryKeywords, 
 					int k,
-					String knowledBaseName) {
+					String knowledBaseName,
+					int maxDepthBound) {
 		
-		long startTime = System.currentTimeMillis();
+//		long startTime = System.currentTimeMillis();
 
-		initialize(knowledBaseName);
+		initialize(knowledBaseName, maxDepthBound);
 		
-		long finishTime = System.currentTimeMillis();
-        long elapsedTime = 
-        		finishTime - startTime;
-		System.out.println("Initialization time is..."
-				+ elapsedTime + " ms");
+//		long finishTime = System.currentTimeMillis();
+//        long elapsedTime = 
+//        		finishTime - startTime;
+//		System.out.println("Initialization time is..."
+//				+ elapsedTime + " ms");
 		
 		long startBCKTime = System.currentTimeMillis();
 		//pruning rule 1
-		//System.out.println("pruning unrelevant sub-trees...");
+		//System.out.println("pruning irrelevant sub-trees...");
 		unrelevantSubtreePruning(queryKeywords);
 		
 		//initialize RSP_qd
@@ -120,38 +126,61 @@ public class BCK {
 						entry.value()))
 				.toList().toBlocking().single();
 		
-		//move the first two NNs to rsp_qd list
-		this.rspQdList = new ArrayList<Entry<String, Point>>();
+		/*System.out.println("size Of RSP is ..."
+				+ this.nearestNeighborList.size());*/
 		
-		this.rspQdList.add(this.nearestNeighborList.get(0));
+		this.rspQdList.addLast(this.nearestNeighborList.get(0));
 		this.nearestNeighborList.remove(0);
 		
-		this.rspQdList.add(this.nearestNeighborList.get(0));
+		this.rspQdList.addLast(this.nearestNeighborList.get(0));
+		this.nearestNeighborList.remove(0);
+		
+		this.rspQdList.addLast(this.nearestNeighborList.get(0));
 		this.nearestNeighborList.remove(0);
 		
 		//System.out.println("Start while loop...");
-		while(!nearestNeighborList.isEmpty()) {
+		while(!nearestNeighborList.isEmpty()
+				&& this.rspQdList.size()<200) {
+			/*if (this.rspQdList.size() % 1000 == 0) {
+				System.out.println("Currently processing line is ..."
+						+ this.rspQdList.size());
+			}*/
+			
+			/*System.out.println("Currently processing line is ..."
+					+ this.rspQdList.size());*/
+			
 			Entry<String, Point> rsp_qd =
-					this.rspQdList.get(
-							this.rspQdList.size()-1);
+					this.rspQdList.getLast();
 			
-			List<Entry<String, Point>> RSP_qd =
-					this.rspQdList;
+			HashMap<Entry<String, Point>,Integer> RSP_pi =
+					new HashMap<Entry<String, Point>,Integer>();
 			
-			for(int i=0; i<RSP_qd.size(); i++) {
-				Entry<String, Point> rsp_pi =
-						RSP_qd.get(i);
+			//initialize RSP_qd using rspQdList (without rsp_qd) 
+			for (int i=0; i<this.rspQdList.size()-1; i++) {
+				RSP_pi.put(this.rspQdList.get(i), 0);
+			}
+			
+			HashMap<Entry<String, Point>,Integer> RSP_pj =
+					new HashMap<Entry<String, Point>,Integer>();
+			//inner loop
+			RSP_pj.putAll(RSP_pi);
+			
+			for (Entry<String, Point> rsp_pi : RSP_pi.keySet()) {
+				RSP_pj.remove(rsp_pi);
 				
-				for(int j=i+1; j<RSP_qd.size(); j++) {
-					Entry<String, Point> rsp_pj =
-							RSP_qd.get(j);
+				for (Entry<String, Point> rsp_pj : RSP_pj.keySet()) {
+					HashMap<Entry<String, Point>,Integer> RSP_vg =
+							new HashMap<Entry<String, Point>,Integer>();
+					
+					//initialize RSP_vg
+					RSP_vg.putAll(RSP_pj);
+					RSP_vg.remove(rsp_pj);
 					
 					//pruning rule 3
 					/*System.out.println("pairwise distance bound "
 							+ "based pruning...");*/
-					List<Entry<String, Point>> RSP_vg = 
-							pairwiseDistanceBoundBasedPruning(
-							rsp_pi, rsp_pj, RSP_qd, queryLocation);
+					RSP_vg = pairwiseDistanceBoundBasedPruning(
+							rsp_pi, rsp_pj, RSP_vg);
 					
 					HashMap< HashMap<String,Integer>,
 						Double> newValidGroups = 
@@ -167,9 +196,11 @@ public class BCK {
 					
 					//calculate ranking score
 					//System.out.println("calculate ranking socre...");
-					newValidGroups = calculateRankingScore(
-							newValidGroups, queryLocation, 
-							queryKeywords, rsp_qd, rsp_pi, rsp_pj);
+					if (!newValidGroups.isEmpty()) {
+						newValidGroups = calculateRankingScore(
+								newValidGroups, queryLocation, 
+								queryKeywords, rsp_qd, rsp_pi, rsp_pj);
+					}
 					
 					//maintain top-k valid groups
 					if (!newValidGroups.isEmpty()) {
@@ -180,7 +211,13 @@ public class BCK {
 				}
 			}
 			
+			/*if (this.kVG.size() == k) {
+				break;
+			}*/
+			
 			moveToNextRspQd();
+			//this.rspQdList.addLast(this.nearestNeighborList.get(0));
+			//this.nearestNeighborList.remove(0);
 		}
 		
 		long finishBCKTime = System.currentTimeMillis();
@@ -195,6 +232,12 @@ public class BCK {
 		return this.kVG;
 	}
 	
+	public void moveToNextRspQd() {
+		this.rspQdList.addLast(this.nearestNeighborList.get(0));
+
+		this.nearestNeighborList.remove(0);
+	}
+
 	public double calculateAverageRankingScoreOfkVG() {
 		
 		this.kVG.forEach((vg,score)->{
@@ -204,56 +247,70 @@ public class BCK {
 		return averageRankingScoreOfkVG/this.kVG.size();
 	}
 
-	public void readDataFromYago() {
+	public void readDataFromYago(
+			int maxDepthBound) {
 		//input file paths
 		String folderName = "dataset/YagoData/";
-		String subtreeInvertedIndexFileName = folderName +
-				"yagoSubTreeInvertedIndex" + ".txt";
 		String subtreeFileName = folderName +
-				"yagoSubTree" + ".txt";
+				"yagoSubTree" + maxDepthBound + ".txt";
+		String subtreeInvertedIndexFileName = folderName +
+				"yagoSubTreeInvertedIndex" 
+				+ maxDepthBound + ".txt";
 		String vertexInvertedIndexFileName = folderName +
-				"yagoVertexInvertedIndex" + ".txt";
+				"yagoVertexInvertedIndex" 
+				+ maxDepthBound + ".txt";
 		String geoCoordinatesFileName = folderName +
 				"yagoGeoCoordinates" + ".txt";
 				
 		//reading input files
+		System.out.println("reading sub-tree...");
+		this.subTree.readSubTreeFromTxt(subtreeFileName);
+		
 		System.out.println("reading sub-tree inverted index...");
 		this.subtreeInvertedIndex.readFromTxt(
 				subtreeInvertedIndexFileName);
-		System.out.println("reading sub-tree...");
-		this.subTree.readSubTreeFromTxt(subtreeFileName);
+		
 		System.out.println("reading vertex inverted index...");
 		this.vertexInvertedIndex.readFromTxt(
 				vertexInvertedIndexFileName);
+		
 		System.out.println("reading geo-coordinates...");
 		this.geoCoordinates.readFromTxt(geoCoordinatesFileName);
+		
 		System.out.println("creating r*-tree...");
 		this.geoIndex.createRTree(this.geoCoordinates);
 	}
 	
-	public void readDataFromDBpedia() {
+	public void readDataFromDBpedia(
+			int maxDepthBound) {
 		//input file paths
 		String folderName = "dataset/DBpediaData/";
-		String subtreeInvertedIndexFileName = folderName +
-				"dbpediaSubTreeInvertedIndex" + ".txt";
 		String subtreeFileName = folderName +
-				"dbpediaSubTree" + ".txt";
-		String vertexInvertedIndexFileName = folderName +
-				"dbpediaVertexInvertedIndex" + ".txt";
+				"dbpediaSubTree" + maxDepthBound + ".txt";
+		String subtreeInvertedIndexFileName = folderName +
+				"dbpediaSubTreeInvertedIndex"
+				+ maxDepthBound + ".txt";
+		/*String vertexInvertedIndexFileName = folderName +
+				"dbpediaVertexInvertedIndex" 
+				+ maxDepthBound + ".txt";*/
 		String geoCoordinatesFileName = folderName +
 				"dbpediaGeoCoordinates" + ".txt";
 				
 		//reading input files
+		System.out.println("reading sub-tree...");
+		this.subTree.readSubTreeFromTxt(subtreeFileName);
+		
 		System.out.println("reading sub-tree inverted index...");
 		this.subtreeInvertedIndex.readFromTxt(
 				subtreeInvertedIndexFileName);
-		System.out.println("reading sub-tree...");
-		this.subTree.readSubTreeFromTxt(subtreeFileName);
-		System.out.println("reading vertex inverted index...");
+		
+		/*System.out.println("reading vertex inverted index...");
 		this.vertexInvertedIndex.readFromTxt(
-				vertexInvertedIndexFileName);
+				vertexInvertedIndexFileName);*/
+		
 		System.out.println("reading geo-coordinates...");
 		this.geoCoordinates.readFromTxt(geoCoordinatesFileName);
+		
 		System.out.println("creating r*-tree...");
 		this.geoIndex.createRTree(this.geoCoordinates);
 	}
@@ -275,6 +332,7 @@ public class BCK {
 				if (this.subtreeInvertedIndex.termVertexHash.get(
 						term).containsKey(root)) {
 					flag=true;
+					break;
 				}
 			}
 				
@@ -282,6 +340,7 @@ public class BCK {
 				removalHash.put(root, 0);
 			}
 		});
+		
 		removalHash.forEach((root,integer)->{
 			this.subTree.subTreeHash.remove(root);
 		});
@@ -298,11 +357,6 @@ public class BCK {
 		}
 	}
 	
-	public void moveToNextRspQd() {
-		this.rspQdList.add(this.nearestNeighborList.get(0));
-		this.nearestNeighborList.remove(0);
-	}
-	
 	public double euclideanDistance(
 			Point pi, Point pj) {
 		double distance = 
@@ -314,20 +368,20 @@ public class BCK {
 		return distance;
 	}
 	
-	public List<Entry<String, Point>> 
+	public HashMap<Entry<String, Point>,Integer> 
 			pairwiseDistanceBoundBasedPruning(
 					Entry<String, Point> rsp_pi,
 					Entry<String, Point> rsp_pj,
-					List<Entry<String, Point>> RSP_qd,
-					Point queryLocation) {
+					HashMap<Entry<String, Point>,Integer> RSP_vg) {
+		
+		HashMap<Entry<String, Point>,Integer> result = 
+				new HashMap<Entry<String, Point>,Integer>();
+		
 		double pairwiseDiatance = 
 				euclideanDistance(rsp_pi.geometry(),
 						rsp_pj.geometry());
 		
-		
-		for(int i=0; i<RSP_qd.size(); i++) {
-			Entry<String, Point> currentEntry =
-					RSP_qd.get(i);
+		for(Entry<String, Point> currentEntry : RSP_vg.keySet()) {
 			double distanceToPi = 
 					euclideanDistance(currentEntry.geometry(),
 							rsp_pi.geometry());
@@ -336,13 +390,19 @@ public class BCK {
 							rsp_pj.geometry());
 			
 			if (distanceToPi>pairwiseDiatance
-					&& distanceToPj>pairwiseDiatance) {
-				RSP_qd.remove(i);
-				i--;
+					|| distanceToPj>pairwiseDiatance) {
+				RSP_vg.replace(currentEntry, 1);
 			}
 		}
 		
-		return RSP_qd;
+		for (Map.Entry<Entry<String, Point>, Integer> currentEntry :
+				RSP_vg.entrySet()) {
+			if (currentEntry.getValue() == 0) {
+				result.put(currentEntry.getKey(), 0);
+			}
+		}
+		
+		return result;
 	}
 	
 	public HashMap<LinkedList<String>,Integer> 
@@ -383,7 +443,7 @@ public class BCK {
 					Entry<String, Point> rsp_qd,
 					Entry<String, Point> rsp_pi,
 					Entry<String, Point> rsp_pj,
-					List<Entry<String, Point>> RSP_vg,
+					HashMap<Entry<String, Point>, Integer> RSP_vg,
 					LinkedList<String> queryKeywords) {
 		
 		HashMap<HashMap<String,Integer>, Double> generatedValidGroups =
@@ -404,26 +464,41 @@ public class BCK {
 			String term = queryKeywords.get(i);
 			if (!this.subtreeInvertedIndex.termVertexHash.get(
 					term).containsKey(rsp_qd.value())
-				&& this.subtreeInvertedIndex.termVertexHash.get(
+				&& !this.subtreeInvertedIndex.termVertexHash.get(
 						term).containsKey(rsp_pi.value())
-				&& this.subtreeInvertedIndex.termVertexHash.get(
+				&& !this.subtreeInvertedIndex.termVertexHash.get(
 						term).containsKey(rsp_pj.value())) {
+				
 				uncoveredKeywords.add(term);
 			}
 		}
 		
-		
 		//uncovered keyword root hash
 		HashMap<String, LinkedList<String>> unKwRootHash =
 				new HashMap<String, LinkedList<String>>();
+		
 		HashMap<LinkedList<String>,Integer> neededRoots = 
 				new HashMap<LinkedList<String>,Integer>();
+		
+		HashMap<HashMap<String,Integer>, Double> newValidGroups =
+				new HashMap<HashMap<String,Integer>, Double>();
 		
 		//if rsp_qd,rsp_pi, and rsp_pj cover all the query keywords
 		if (uncoveredKeywords.isEmpty()) {
 			generatedValidGroups.put(group, Double.MAX_VALUE);
+			
+			generatedValidGroups.forEach((key,value)->{
+				if (!this.validGroups.containsKey(key)) {
+					this.validGroups.put(key, value);
+					newValidGroups.put(key, value);
+				}
+			});
 		} else {
 			//fill uncovered keyword root hash
+			if (RSP_vg.isEmpty()) {
+				return newValidGroups;
+			}
+			
 			for(int i=0; i<uncoveredKeywords.size(); i++) {
 				String term = uncoveredKeywords.get(i);
 				
@@ -431,14 +506,12 @@ public class BCK {
 				unKwRootHash.put(term, 
 						new LinkedList<String>());
 				
-				RSP_vg.forEach(e->{
-					//if a sub-tree covers the term,
-					//add it to uncovered keyword root hash
+				for (Entry<String, Point> rsp_vg : RSP_vg.keySet()) {
 					if (this.subtreeInvertedIndex.termVertexHash.get(
-							term).containsKey(e.value())) {
-						unKwRootHash.get(term).add(e.value());
+							term).containsKey(rsp_vg.value())) {
+						unKwRootHash.get(term).add(rsp_vg.value());
 					}
-				});
+				}
 			}
 			
 			//check whether there exist a valid group
@@ -460,28 +533,25 @@ public class BCK {
 				neededRoots = generateRootsToCoverKeyword(
 						0, inputList, result,
 						uncoveredKeywords, unKwRootHash);
+				
+				neededRoots.forEach((list,integer)->{
+					HashMap<String, Integer> groupCopy = group;
+					
+					list.forEach(root->{
+						groupCopy.put(root, 0);
+					});
+					
+					generatedValidGroups.put(groupCopy, Double.MAX_VALUE);
+				});
+				
+				generatedValidGroups.forEach((key,value)->{
+					if (!this.validGroups.containsKey(key)) {
+						this.validGroups.put(key, value);
+						newValidGroups.put(key, value);
+					}
+				});
 			}
 		}
-		
-		neededRoots.forEach((list,integer)->{
-			HashMap<String, Integer> groupCopy = group;
-			
-			list.forEach(root->{
-				groupCopy.put(root, 0);
-			});
-			
-			generatedValidGroups.put(groupCopy, Double.MAX_VALUE);
-		});
-		
-		HashMap<HashMap<String,Integer>, Double> newValidGroups =
-				new HashMap<HashMap<String,Integer>, Double>();
-		
-		generatedValidGroups.forEach((key,value)->{
-			if (!this.validGroups.containsKey(key)) {
-				this.validGroups.put(key, value);
-				newValidGroups.put(key, value);
-			}
-		});
 		
 		return newValidGroups;
 	}
@@ -491,18 +561,14 @@ public class BCK {
 		LSP = Integer.MAX_VALUE;
 		
 		validGroup.forEach((root,integer)->{
-			if (this.vertexInvertedIndex.termVertexHash.get(
-					keyword).containsKey(root)) {
-				LSP = 0;
-			} else if (this.subtreeInvertedIndex.termVertexHash.
+			if (this.subtreeInvertedIndex.termVertexHash.
 					get(keyword).containsKey(root)) {
-				this.subTree.subTreeHash.get(root).forEach(
-					(vertex,depth)->{
-						if (this.vertexInvertedIndex.termVertexHash.
-								get(keyword).containsKey(vertex)) {
-							LSP = Math.min(LSP, depth);
-						}	
-					});
+				int temp = this.subtreeInvertedIndex.termVertexHash.
+						get(keyword).get(root);
+				
+				if (temp < LSP) {
+					LSP = temp;
+				}
 			}
 		});
 		

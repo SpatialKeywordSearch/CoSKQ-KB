@@ -36,13 +36,15 @@ public class QueryGenerator {
 		thresholdKeyword = "";
 	}
 	
-	public void readDataFromYago() {
+	public void readDataFromYago(
+			int maxDepthBound) {
 		//input file paths
 		String folderName = "dataset/YagoData/";
 		/*String graphFileName = folderName +
 				"yagoGraph" + ".txt";*/
 		String subtreeInvertedIndexFileName = folderName +
-				"yagoSubTreeInvertedIndex" + ".txt";
+				"yagoSubTreeInvertedIndex" 
+				+ maxDepthBound + ".txt";
 		/*String subtreeFileName = folderName +
 				"yagoSubTree" + ".txt";*/
 		/*String vertexInvertedIndexFileName = folderName +
@@ -60,13 +62,15 @@ public class QueryGenerator {
 		this.geoIndex.createRTree(geoCoordinates);
 	}
 	
-	public void readDataFromDBpedia() {
+	public void readDataFromDBpedia(
+			int maxDepthBound) {
 		//input file paths
 		String folderName = "dataset/DBpediaData/";
 		/*String graphFileName = folderName +
 				"yagoGraph" + ".txt";*/
 		String subtreeInvertedIndexFileName = folderName +
-				"dbpediaSubTreeInvertedIndex" + ".txt";
+				"dbpediaSubTreeInvertedIndex"
+				+ maxDepthBound + ".txt";
 		/*String subtreeFileName = folderName +
 				"yagoSubTree" + ".txt";*/
 		/*String vertexInvertedIndexFileName = folderName +
@@ -171,17 +175,18 @@ public class QueryGenerator {
 	public void generateQuery(Point location,
 			double maxDiatance, int numberOfNN, 
 			int numberOfKeywords, int valueOfK,
-			String knowledgeBaseName) {
+			String knowledgeBaseName,
+			int maxDepthBound) {
 		//read Yago data
 		if (knowledgeBaseName.equals("YAGO")) {
 			System.out.println("Start reading data from yago...");
-			readDataFromYago();
+			readDataFromYago(maxDepthBound);
 		}
 		
 		//read Yago data
 		if (knowledgeBaseName.equals("DBpedia")) {
 			System.out.println("Start reading data from DBpedia...");
-			readDataFromDBpedia();
+			readDataFromDBpedia(maxDepthBound);
 		}		
 		
 		//get nearest neighbor hash

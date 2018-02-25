@@ -35,19 +35,25 @@ public class InvertedIndex {
 			br = new BufferedReader(fr);
 			String currentLine;
 			String term = ""; 
-			String vertex = "";
+			String node = "";	//node is a vertex or root
+			String lspString = "";
+			int lsp = 0;
 			
 			//Read file line by line
 			while((currentLine = br.readLine()) != null) {
-				//term line
+				//node line
 				if(currentLine.startsWith("{")) {
-					vertex = currentLine.substring(1, 
+					node = currentLine.substring(1, 
 							currentLine.length()-1);
 				}
-				//vertex line
+				//term and lsp line
 				else if (currentLine.startsWith("[")) {
 					term = currentLine.substring(1, 
-							currentLine.length()-1);
+    						currentLine.indexOf("]"));
+					lspString = currentLine.substring(
+    						currentLine.indexOf("{")+1, 
+    						currentLine.indexOf("}"));
+    				lsp = Integer.valueOf(lspString);
 					
 					//add term
 					if(!this.termVertexHash.containsKey(term)
@@ -57,7 +63,7 @@ public class InvertedIndex {
 					}
 					
 					//add to vertex linked list w.r.t. term
-					this.termVertexHash.get(term).put(vertex,0);
+					this.termVertexHash.get(term).put(node,lsp);
 				}
 			}
 		} catch (Exception e) {
@@ -94,10 +100,11 @@ public class InvertedIndex {
 					bw.write("{" + k + "}");
 					bw.newLine();
 					
-					v.forEach((vertex, integer)->{
-						if(!vertex.equals("")) {
+					v.forEach((node, lsp)->{
+						if(!node.equals("")) {
 							try {
-								bw.write("[" + vertex + "]");
+								bw.write("[" + node + "]");
+								bw.write("{" + lsp + "}");
 				                bw.newLine();
 							} catch (IOException e) {
 								// TODO Auto-generated catch block
@@ -143,7 +150,9 @@ public class InvertedIndex {
     		br = new BufferedReader(fr);
     		String currentLine;
     		String term = ""; 
-    		String vertex;
+    		String node;
+    		String lspString;
+    		int lsp;
 			
     		//Read file line by line
     		while((currentLine = br.readLine()) != null) {
@@ -155,13 +164,17 @@ public class InvertedIndex {
     				this.termVertexHash.put(term,
     						new HashMap<String,Integer>());
     			}
-    			//vertex line
+    			//node line
     			else if (currentLine.startsWith("[")) {
-    				vertex = currentLine.substring(1, 
-    						currentLine.length()-1);
+    				node = currentLine.substring(1, 
+    						currentLine.indexOf("]"));
+					lspString = currentLine.substring(
+    						currentLine.indexOf("{")+1, 
+    						currentLine.indexOf("}"));
+    				lsp = Integer.valueOf(lspString);
     				
     				//add to vertex linked list w.r.t. term
-    				this.termVertexHash.get(term).put(vertex,0);
+    				this.termVertexHash.get(term).put(node,lsp);
 				}
     		}
 		} catch (Exception e) {

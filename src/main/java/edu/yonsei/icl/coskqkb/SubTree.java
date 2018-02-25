@@ -6,6 +6,7 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.Iterator;
 
 public class SubTree {
 	HashMap<String, HashMap<String,Integer>> vertexKeywordHash;
@@ -17,8 +18,11 @@ public class SubTree {
 	static BufferedReader br;
 	static int countingNumber;
 	static int depth;
+	static int lsp;
+	static int maxDepth;
 	static double totalPostingListLength;
-	HashMap<String, Integer> fatherVertexList;
+	HashMap<String, Integer> currentLoopVertexList;
+	HashMap<String, Integer> nextLoopVertexList;
 	HashMap<String, Integer> sonVertexList;
 
 	public SubTree() {
@@ -28,6 +32,20 @@ public class SubTree {
 				HashMap<String, Integer>>();
 		this.subTreeHash = new HashMap<String, 
 				HashMap<String, Integer>>();
+	}
+	
+	public int getMaxDepth() {
+		maxDepth = 0;
+		
+		subTreeHash.forEach((root,vertexHash)->{
+			vertexHash.forEach((vertex,vertexDepth)->{
+				if (vertexDepth > maxDepth) {
+					maxDepth = vertexDepth;
+				}
+			});
+		});
+		
+		return maxDepth;
 	}
 	
 	public double getAveragePostingListLength() {
@@ -41,11 +59,12 @@ public class SubTree {
 	}
 	
 	public HashMap<String, Integer> getSonVertexList(
-			String startVertex, AdjacencyList adjacencyList){
+			String startVertex, 
+			HashMap<String, HashMap<String, String>> graph){
 		HashMap<String, Integer> sonVertexList =
 				new HashMap<String, Integer>();
 		HashMap<String, String> edgeEndVertexHash = 
-				adjacencyList.graph.get(startVertex);
+				graph.get(startVertex);
 		
 		if (edgeEndVertexHash==null) {
 			return null;
@@ -74,56 +93,105 @@ public class SubTree {
 		return sonVertexList;
 	}
 	
-	public void createSubTreeFromGraph(String root,
+	public void createKeywordHash(
 			AdjacencyList adjacencyList) {
-		this.fatherVertexList = new HashMap<String, Integer>();
+		adjacencyList.vertexHash.forEach((vertex,isPlace)->{
+			if(vertex.startsWith("<")) {
+				createVertexKeywordFromGraph(
+						vertex, adjacencyList.graph);
+			}
+		});
 		
+		createRootKeyword();		
+	}
+
+	public void createSubTreeFromGraph(
+			int maxDepthBound,
+			AdjacencyList adjacencyList) {
+		this.subTreeHash = 
+				new HashMap<String, HashMap<String, Integer>>();
+		
+		countingNumber=0;
+		
+		adjacencyList.graph.forEach(
+				(startVertex, edgeEndVertexList)->{
+			//if the start vertex is a place vertex
+			if (adjacencyList.vertexHash.get(startVertex).equals(
+					Boolean.TRUE)) {
+				countingNumber++;
+				
+				if (countingNumber%10000==0) {
+					System.out.println("Current processing line is..."
+							+ countingNumber);
+				}
+				
+				createSubTreeFromGraph(startVertex, maxDepthBound,
+						adjacencyList.graph);
+			}
+		});
+		
+		createKeywordHash(adjacencyList);
+	}
+	
+	public void createSubTreeFromGraph(String root,
+			int maxDepthBound,
+			HashMap<String, HashMap<String, String>> graph) {
+		this.currentLoopVertexList = 
+				new HashMap<String, Integer>();
+		this.nextLoopVertexList =
+				new HashMap<String, Integer>();
+		
+		//add root to subtree hash with empty hash
 		HashMap<String, Integer> tempHash =
 				new HashMap<String, Integer>();
 		this.subTreeHash.put(root, tempHash);
 		
 		depth = 0;
-		this.fatherVertexList = getSonVertexList(root,
-				adjacencyList);
-		//while son list is not null
-		while(this.fatherVertexList!=null) {
+		this.nextLoopVertexList = getSonVertexList(root, graph);
+		
+		//while next loop vertex list is not null
+		while(!this.nextLoopVertexList.isEmpty()
+				&& depth < maxDepthBound) {
 			depth++;
 			this.sonVertexList = new HashMap<String, Integer>();
 			
-			this.fatherVertexList.forEach(
-					(currentFather, integer)->{
+			this.currentLoopVertexList.putAll(nextLoopVertexList);
+			/*this.nextLoopVertexList =
+					new HashMap<String, Integer>();*/
+			nextLoopVertexList.clear();
+			
+			this.currentLoopVertexList.forEach(
+					(currentLoopVertex, integer)->{
 				//add current father to the subtree
-				this.subTreeHash.get(root).put(currentFather, 
+				this.subTreeHash.get(root).put(currentLoopVertex, 
 						depth);
 				
-				//add sons of the current father to son list
+				//add sons of the current loop vertex list
+				//to next loop vertex list
 				HashMap<String, Integer> tempInnerHash =
 						new HashMap<String, Integer>();
-				tempInnerHash = getSonVertexList(currentFather,
-						adjacencyList);
+				tempInnerHash = getSonVertexList(currentLoopVertex,
+						graph);
 				
 				if (tempInnerHash!=null) {
 					tempInnerHash.forEach(
 							(currentSon,innerInteger)->{
-						if(this.sonVertexList.containsKey(
+						if(!this.subTreeHash.get(root).containsKey(
 								currentSon)) {
-							this.sonVertexList.put(currentSon,0);
+							this.nextLoopVertexList.put(
+									currentSon,0);
 						}
 					});
 				}
 			});
 			
-			//update father list for next depth loop
-			if(!this.sonVertexList.isEmpty()) {
-				this.fatherVertexList = this.sonVertexList;
-			} else {
-				this.fatherVertexList = null;
-			}
+			currentLoopVertexList.clear();
 		}
 	}
 	
 	public void createVertexKeywordFromGraph(
-			String startVertex, AdjacencyList adjacencyList){
+			String startVertex,
+			HashMap<String, HashMap<String, String>> graph){
 		//if start vertex does not exist in vertex keyword hash
 		//add start vertex with an empty linked list
 		if(!this.vertexKeywordHash.containsKey(startVertex)) {
@@ -160,9 +228,9 @@ public class SubTree {
 			}
 		}
 		
-		if (adjacencyList.graph.containsKey(startVertex)) {
+		if (graph.containsKey(startVertex)) {
 			HashMap<String, String> edgeEndvertexList= 
-					adjacencyList.graph.get(startVertex);
+					graph.get(startVertex);
 			
 			edgeEndvertexList.forEach((edge,endVertex)->{
 				if(edge.equals("rdfs:label")
@@ -202,8 +270,7 @@ public class SubTree {
 	}
 	
 	public void createRootKeyword(){
-		this.subTreeHash.forEach((k,v)->{
-			String root = k;
+		this.subTreeHash.forEach((root,v)->{
 			
 			//if the root is a new one, add it to root keyword hash
 			if(!this.rootKeywordHash.containsKey(root)) {
@@ -238,7 +305,11 @@ public class SubTree {
 						if(!this.rootKeywordHash.get(
 								root).containsKey(keyword)) {
 							this.rootKeywordHash.get(
-									root).put(keyword,0);
+									root).put(keyword,depth);
+						} else if (this.rootKeywordHash.get(
+								root).get(keyword)>depth) {
+							this.rootKeywordHash.get(
+									root).replace(keyword, depth);
 						}
 					});
 				}
@@ -246,34 +317,6 @@ public class SubTree {
 		});
 		
 		deleteEmptyRootKeyword();
-	}
-	
-	public void createSubTreeFromGraph(
-			AdjacencyList adjacencyList) {
-		this.subTreeHash = 
-				new HashMap<String, HashMap<String, Integer>>();
-		
-		countingNumber=0;		
-		adjacencyList.graph.forEach(
-				(startVertex, edgeEndVertexList)->{
-			countingNumber++;
-			
-			if (countingNumber%100000==0) {
-				System.out.println("Current processing line is..."
-						+ countingNumber);
-			}
-			
-			createSubTreeFromGraph(startVertex, adjacencyList);
-		});
-		
-		adjacencyList.vertexHash.forEach((vertex,isPlace)->{
-			if(vertex.startsWith("<")) {
-				createVertexKeywordFromGraph(
-						vertex, adjacencyList);
-			}
-		});
-		
-		createRootKeyword();
 	}
 	
 	public void deleteEmptyRootKeyword() {
@@ -296,7 +339,8 @@ public class SubTree {
 			fw = new FileWriter(fileName);
 			bw = new BufferedWriter(fw);
 			
-			//Write root with {}, vertex with [], depth {}
+			//Write root with {}, 
+			//vertex with [], depth with {}
 			this.subTreeHash.forEach((k,v)->{
 				try {
 					bw.write("{" + k + "}");
@@ -355,6 +399,7 @@ public class SubTree {
 						if (!keyword.equals("")) {
 	                		try {
 								bw.write("[" + keyword + "]");
+								bw.write("{" + 0 + "}");
 								bw.newLine();
 							} catch (IOException e) {
 								// TODO Auto-generated catch block
@@ -395,16 +440,18 @@ public class SubTree {
 			fw = new FileWriter(fileName);
 			bw = new BufferedWriter(fw);
 			
-			//Write root with {}, keyword with []
+			//Write root with {}
+			//keyword with [], lsp with {}
 			this.rootKeywordHash.forEach((k,v)->{
 				try {
 					bw.write("{" + k + "}");
 					bw.newLine();
 	                
-					v.forEach((keyword,integer)->{
+					v.forEach((keyword,lsp)->{
 						if (!keyword.equals("")) {
 	                		try {
 								bw.write("[" + keyword + "]");
+								bw.write("{" + lsp + "}");
 								bw.newLine();
 							} catch (IOException e) {
 								// TODO Auto-generated catch block
@@ -564,6 +611,7 @@ public class SubTree {
     		String currentLine;
     		String root = "";
     		String keyword;
+    		String lspString;
 			
     		//Read file line by line
     		while((currentLine = br.readLine()) != null) {
@@ -576,14 +624,18 @@ public class SubTree {
     				this.rootKeywordHash.put(root, 
     						new HashMap<String,Integer>());
     			}
-    			//keyword line
+    			//keyword and lsp line
     			else if (currentLine.startsWith("[")) {
     				keyword = currentLine.substring(1, 
     						currentLine.indexOf("]"));
+    				lspString = currentLine.substring(
+    						currentLine.indexOf("{")+1, 
+    						currentLine.indexOf("}"));
+    				lsp = Integer.valueOf(lspString);
     				
     				//add keyword to root keyword hash
     				this.rootKeywordHash.get(root).put(
-    						keyword,0);
+    						keyword,lsp);
     			}
     		}
 		} catch (Exception e) {

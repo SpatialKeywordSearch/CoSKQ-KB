@@ -46,7 +46,8 @@ public class MKSP {
 				new HashMap< HashMap<String,Integer>,Double>();
 	}
 	
-	public void initialize(String knowledgeBaseName) {
+	public void initialize(String knowledgeBaseName,
+			int maxDepthBound) {
 		this.averageRankingScoreOfkVG = 0;
 		this.numberOfVGGeneration = 0;
 		this.spatialDistance = -1;
@@ -71,10 +72,12 @@ public class MKSP {
 		String subtreeFileName = "";
 		
 		if (knowledgeBaseName.equals("YAGO")) {
-			subtreeFileName = "dataset/YagoData/yagoSubTree.txt";
+			subtreeFileName = "dataset/YagoData/yagoSubTree"
+					+ maxDepthBound + ".txt";
 		}else if (knowledgeBaseName.equals("DBpedia")) {
 			subtreeFileName = 
-					"dataset/DBpediaData/dbpediaSubTree.txt";
+					"dataset/DBpediaData/dbpediaSubTree"
+					+ maxDepthBound + ".txt";
 		}
 		
 		//System.out.println("reading sub-tree...");
@@ -85,9 +88,10 @@ public class MKSP {
 			findTopkValidGroup(Point queryLocation,
 					LinkedList<String> queryKeywords, 
 					int k,
-					String knowledBaseName) {
+					String knowledBaseName,
+					int maxDepthBound) {
 		
-		initialize(knowledBaseName);
+		initialize(knowledBaseName, maxDepthBound);
 		
 		long startBCKTime = System.currentTimeMillis();
 		//pruning rule 1
@@ -345,56 +349,70 @@ public class MKSP {
 		return averageRankingScoreOfkVG/this.kVG.size();
 	}
 
-	public void readDataFromYago() {
+	public void readDataFromYago(
+			int maxDepthBound) {
 		//input file paths
 		String folderName = "dataset/YagoData/";
-		String subtreeInvertedIndexFileName = folderName +
-				"yagoSubTreeInvertedIndex" + ".txt";
 		String subtreeFileName = folderName +
-				"yagoSubTree" + ".txt";
+				"yagoSubTree" + maxDepthBound + ".txt";
+		String subtreeInvertedIndexFileName = folderName +
+				"yagoSubTreeInvertedIndex"
+				+ maxDepthBound + ".txt";
 		String vertexInvertedIndexFileName = folderName +
-				"yagoVertexInvertedIndex" + ".txt";
+				"yagoVertexInvertedIndex"
+				+ maxDepthBound + ".txt";
 		String geoCoordinatesFileName = folderName +
 				"yagoGeoCoordinates" + ".txt";
 				
 		//reading input files
+		System.out.println("reading sub-tree...");
+		this.subTree.readSubTreeFromTxt(subtreeFileName);
+		
 		System.out.println("reading sub-tree inverted index...");
 		this.subtreeInvertedIndex.readFromTxt(
 				subtreeInvertedIndexFileName);
-		System.out.println("reading sub-tree...");
-		this.subTree.readSubTreeFromTxt(subtreeFileName);
+		
 		System.out.println("reading vertex inverted index...");
 		this.vertexInvertedIndex.readFromTxt(
 				vertexInvertedIndexFileName);
+		
 		System.out.println("reading geo-coordinates...");
 		this.geoCoordinates.readFromTxt(geoCoordinatesFileName);
+		
 		System.out.println("creating r*-tree...");
 		this.geoIndex.createRTree(this.geoCoordinates);
 	}
 	
-	public void readDataFromDBpedia() {
+	public void readDataFromDBpedia(
+			int maxDepthBound) {
 		//input file paths
 		String folderName = "dataset/DBpediaData/";
-		String subtreeInvertedIndexFileName = folderName +
-				"dbpediaSubTreeInvertedIndex" + ".txt";
 		String subtreeFileName = folderName +
-				"dbpediaSubTree" + ".txt";
+				"dbpediaSubTree" + maxDepthBound + ".txt";
+		String subtreeInvertedIndexFileName = folderName +
+				"dbpediaSubTreeInvertedIndex" 
+				+ maxDepthBound + ".txt";
 		String vertexInvertedIndexFileName = folderName +
-				"dbpediaVertexInvertedIndex" + ".txt";
+				"dbpediaVertexInvertedIndex" 
+				+ maxDepthBound + ".txt";
 		String geoCoordinatesFileName = folderName +
 				"dbpediaGeoCoordinates" + ".txt";
 				
 		//reading input files
+		System.out.println("reading sub-tree...");
+		this.subTree.readSubTreeFromTxt(subtreeFileName);
+		
 		System.out.println("reading sub-tree inverted index...");
 		this.subtreeInvertedIndex.readFromTxt(
 				subtreeInvertedIndexFileName);
-		System.out.println("reading sub-tree...");
-		this.subTree.readSubTreeFromTxt(subtreeFileName);
+		
 		System.out.println("reading vertex inverted index...");
 		this.vertexInvertedIndex.readFromTxt(
 				vertexInvertedIndexFileName);
+		
 		System.out.println("reading geo-coordinates...");
 		this.geoCoordinates.readFromTxt(geoCoordinatesFileName);
+		
 		System.out.println("creating r*-tree...");
 		this.geoIndex.createRTree(this.geoCoordinates);
 	}
