@@ -3,14 +3,41 @@ package edu.yonsei.icl.coskqkb;
 public class InvertedIndexTest {
 
 	public static void main(String[] args) {
-		String readFileName = 
-				"dataset/YagoData/yagoSubTreeKeyword.txt";
-		String writeFileName =
-				"dataset/YagoData/yagoSubTreeInvertedIndex.txt";
+		/*int maxDepthBound = 0;
+		String readSubTreeKeywordFileName = 
+				"dataset/YagoData/yagoSubTreeKeyword"
+				+ maxDepthBound + ".txt";
+		String writeSubTreeKeywordFileName =
+				"dataset/YagoData/yagoSubTreeInvertedIndex"
+				+ maxDepthBound + ".txt";
+		String readVertexKeywordFileName = 
+				"dataset/YagoData/yagoVertexKeyword"
+				+ maxDepthBound + ".txt";
+		String writeVertexKeywordFileName =
+				"dataset/YagoData/yagoVertexInvertedIndex"
+				+ maxDepthBound + ".txt";*/
+		
+		int maxDepthBound = 3;
+		String readSubTreeKeywordFileName = 
+				"dataset/DBpediaData/dbpediaSubTreeKeyword"
+				+ maxDepthBound + ".txt";
+		String writeSubTreeKeywordFileName =
+				"dataset/DBpediaData/dbpediaSubTreeInvertedIndex"
+				+ maxDepthBound + ".txt";
+		String readVertexKeywordFileName = 
+				"dataset/DBpediaData/dbpediaVertexKeyword"
+				+ maxDepthBound + ".txt";
+		String writeVertexKeywordFileName =
+				"dataset/DBpediaData/dbpediaVertexInvertedIndex"
+				+ maxDepthBound + ".txt";
 		
 		long startTime = System.currentTimeMillis();
 		
-		transformToInvertedIndex(readFileName, writeFileName);
+		transformToInvertedIndex(
+				readSubTreeKeywordFileName,
+				writeSubTreeKeywordFileName,
+				readVertexKeywordFileName,
+				writeVertexKeywordFileName);
 		
 		long finishTime = System.currentTimeMillis();
         long elapsedTime = 
@@ -62,9 +89,16 @@ public class InvertedIndexTest {
 	}
 
 	public static void transformToInvertedIndex(
-			String readFileName, String writeFileName) {
+			String readSubTreeKeywordFileName,
+			String writeSubTreeKeywordFileName,
+			String readVertexKeywordFileName,
+			String writeVertexKeywordFileName) {
 		InvertedIndex invertedIndex = new InvertedIndex();
-		invertedIndex.createFromTxt(readFileName);
-		invertedIndex.writeToTxt(writeFileName);
+		
+		invertedIndex.createFromTxt(readSubTreeKeywordFileName);
+		invertedIndex.writeToTxt(writeSubTreeKeywordFileName);
+		
+		invertedIndex.createFromTxt(readVertexKeywordFileName);
+		invertedIndex.writeToTxt(writeVertexKeywordFileName);
 	}
 }

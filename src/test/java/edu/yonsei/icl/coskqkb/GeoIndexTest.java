@@ -4,12 +4,19 @@ public class GeoIndexTest {
 
 	public static void main(String[] args) {
 		// TODO Auto-generated method stub
-		String readFileName =
+		/*String readFileName =
 				"dataset/DBpediaData/dbpediaGeoCoordinates.txt";
 		String writeFileName =
 				"dataset/DBpediaData/dbpediaGeoIndex.txt";
 		String visualizationFileName =
-				"dataset/DBpediaData/dbpediaRTreeVisualization.png";
+				"dataset/DBpediaData/dbpediaRTreeVisualization.png";*/
+		
+		String readFileName =
+				"dataset/YagoData/yagoGeoCoordinates.txt";
+		String writeFileName =
+				"dataset/YagoData/yagoGeoIndex.txt";
+		String visualizationFileName =
+				"dataset/YagoData/yagoRTreeVisualization.png";
 		
 		long startTime = System.currentTimeMillis();
 		

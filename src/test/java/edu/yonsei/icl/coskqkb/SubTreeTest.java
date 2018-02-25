@@ -6,81 +6,71 @@ public class SubTreeTest {
 	public static void main(String[] args) {
 		// TODO Auto-generated method stub
 		//String knowledgeBaseName = "YAGO";
-		String readFileName = 
-				"dataset/YagoData/yagoGraph.txt";
+		
+		/*String readFileName = 
+				"dataset/YagoData/yagoGraph_withSameAs.txt";
+		
+		int maxDepthBound = 0;
 		String writeSubTreeFileName =
-				"dataset/YagoData/yagoSubTree.txt";
+				"dataset/YagoData/yagoSubTree"
+				+ maxDepthBound + ".txt";
 		String writeVertexKeywordFileName =
-				"dataset/YagoData/yagoVertexKeyword.txt";
+				"dataset/YagoData/yagoVertexKeyword"
+				+ maxDepthBound + ".txt";
 		String writeRootKeywordFileName =
-				"dataset/YagoData/yagoSubTreeKeyword.txt";
+				"dataset/YagoData/yagoSubTreeKeyword"
+				+ maxDepthBound + ".txt";*/
+		
+		
+		/*String readFileName = 
+				"dataset/DBpediaData/dbpediaGraph_withSameAs.txt";
+		
+		int maxDepthBound = 3;
+		String writeSubTreeFileName =
+				"dataset/DBpediaData/dbpediaSubTree"
+				+ maxDepthBound + ".txt";
+		String writeVertexKeywordFileName =
+				"dataset/DBpediaData/dbpediaVertexKeyword"
+				+ maxDepthBound + ".txt";
+		String writeRootKeywordFileName =
+				"dataset/DBpediaData/dbpediaSubTreeKeyword"
+				+ maxDepthBound + ".txt";
 		
 		long startTime = System.currentTimeMillis();
 		
-		transformGraphToTxt(readFileName,
-				writeSubTreeFileName, writeVertexKeywordFileName,
+		transformGraphToTxt(maxDepthBound, 
+				readFileName, writeSubTreeFileName, 
+				writeVertexKeywordFileName,
 				writeRootKeywordFileName);
 		
         long finishTime = System.currentTimeMillis();
         long elapsedTime = 
         		finishTime - startTime;
 		System.out.println("Subtree generation time is..."
-				+ elapsedTime + " ms");
+				+ elapsedTime + " ms");*/
 		
+		SubTree subTree = new SubTree();
+		String target = 
+			"<http://dbpedia.org/resource/Myongji_University>";
 		
+		//get root keyword hash
+		subTree.readRootKeywordFromTxt(
+				"dataset/DBpediaData/dbpediaSubTreeKeyword3.txt");
 		
+		System.out.println(subTree.rootKeywordHash.get(target)
+				.toString());
 		
-		/*maxDepth = 0;
-		subTree1.subTreeHash.forEach((root,vertexHash)->{
-			vertexHash.forEach((vertex,depth)->{
-				if(maxDepth<depth) {
-					maxDepth = depth;
-				}
-			});
-		});
+		//get children vertex hash
+		subTree.readSubTreeFromTxt(
+				"dataset/DBpediaData/dbpediaSubTree3.txt");
 		
-		System.out.println("max depth is..." + maxDepth);*/
+		System.out.println(subTree.subTreeHash.get(target)
+				.toString());
 		
-		/*System.out.println("Start creating sub-trees...");
-		long startTime = System.currentTimeMillis();
-		subTree1.createSubTreeFromGraph(adjacencyList);
-        long finishTime = System.currentTimeMillis();
-        long executionTime = finishTime - startTime;
-        System.out.println("Finish creating sub-trees..."
-        		+ "elapsed time: " + executionTime
-        		+ " milliseconds");*/
-        
-		/*subTree1.readSubTreeFromTxt(writeSubTreeFileName);
-		subTree1.readVertexKeywordFromTxt(writeVertexKeywordFileName);
-		subTree1.readRootKeywordFromTxt(writeRootKeywordFileName);*/
-		
-        /*System.out.println("Statistics for subTree1 is..."
-        		+ " \nNo. of sub-trees: "
-        		+ subTree1.subTreeHash.size()
-        		+ " \nNo. of vertices: "
-        		+ subTree1.vertexKeywordHash.size()
-        		+ " \nNo. of roots: "
-        		+ subTree1.rootKeywordHash.size());*/
-        
-        /*System.out.println(subTree1.vertexKeywordHash.get(
-        		"<Village_Inn_Golf__Conference_Ct>").toString());*/
-        
-		/*-- Read from txt files --*/
-        /*SubTree subTree2 = new SubTree();
-        subTree2.readSubTreeFromTxt(writeSubTreeFileName);
-        subTree2.readVertexKeywordFromTxt(writeVertexKeywordFileName);
-        subTree2.readRootKeywordFromTxt(writeRootKeywordFileName);
-        
-        System.out.println("Statistics for subTree2 is..."
-        		+ " \nNo. of sub-trees: "
-        		+ subTree2.subTreeHash.size()
-        		+ " \nNo. of vertices: "
-        		+ subTree2.vertexKeywordHash.size()
-        		+ " \nNo. of roots: "
-        		+ subTree2.rootKeywordHash.size());*/
 	}
 
 	public static void transformGraphToTxt(
+			int maxDepthBound,
 			String readFileName, String writeSubTreeFileName,
 			String writeVertexKeywordFileName,
 			String writeRootKeywordFileName) {
@@ -93,8 +83,9 @@ public class SubTreeTest {
 		
 		System.out.println("Start creating sub-tree from graph...");
 		SubTree subTree = new SubTree();
-		subTree.createSubTreeFromGraph(
+		subTree.createSubTreeFromGraph(maxDepthBound,
 				adjacencyList);
+		//subTree.createKeywordHash(adjacencyList);
 		
 		/*-- Write to txt files --*/
         System.out.println("Start writing sub-tree to..."

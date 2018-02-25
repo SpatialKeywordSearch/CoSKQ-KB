@@ -5,9 +5,14 @@ public class GeoCoordinatesTest {
 	public static void main(String[] args) {
 		// TODO Auto-generated method stub
 		String readFileName = 
-				"dataset/YagoData/yagoGraph.txt";
+				"dataset/YagoData/yagoGraph_withSameAs.txt";
 		String writeFileName = 
 				"dataset/YagoData/yagoGeoCoordinates.txt";
+		
+		/*String readFileName = 
+				"dataset/DBpediaData/dbpediaGraph_withSameAs.txt";
+		String writeFileName = 
+				"dataset/DBpediaData/dbpediaGeoCoordinates.txt";*/
 		
 		long startTime = System.currentTimeMillis();
 

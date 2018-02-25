@@ -4,17 +4,38 @@ public class StatisticsTest {
 
 	public static void main(String[] args) {
 		// TODO Auto-generated method stub
-		showYagoStatistics();
-		//showDBpediaStatistics();
+		//showYagoStatistics();
+		showDBpediaStatistics();
 	}
 	
 	public static void showYagoStatistics() {
 		String graphPath =
-			"dataset/YagoData/yagoGraph.txt";
+			"dataset/YagoData/yagoGraph_withSameAs.txt";
+		
+		int maxDepthBound = 1;
 		String vertexKeywordPath =
-			"dataset/YagoData/yagoVertexKeyword.txt";
+			"dataset/YagoData/yagoVertexKeyword"
+				+ maxDepthBound + ".txt";
 		String subTreeKeywordPath =
-			"dataset/YagoData/yagoSubTreeKeyword.txt";
+			"dataset/YagoData/yagoSubTreeKeyword"
+				+ maxDepthBound + ".txt";
+		String subTreePath = 
+			"dataset/YagoData/yagoSubTree" 
+				+ maxDepthBound + ".txt";
+		
+		/*String graphPath =
+				"dataset/DBpediaData/dbpediaGraph_withSameAs.txt";
+		
+		int maxDepthBound = 10;
+		String vertexKeywordPath =
+				"dataset/DBpediaData/dbpediaVertexKeyword"
+						+ maxDepthBound + ".txt";
+		String subTreeKeywordPath =
+				"dataset/DBpediaData/dbpediaSubTreeKeyword"
+						+ maxDepthBound + ".txt";
+		String subTreePath = 
+				"dataset/DBpediaData/dbpediaSubTree"
+						+ maxDepthBound + ".txt";*/
 		
 		AdjacencyList adjacencyList = new AdjacencyList();
 		adjacencyList.addFromTxt(graphPath);
@@ -23,6 +44,7 @@ public class StatisticsTest {
 		SubTree subTree = new SubTree();
 		subTree.readVertexKeywordFromTxt(vertexKeywordPath);
 		subTree.readRootKeywordFromTxt(subTreeKeywordPath);
+		subTree.readSubTreeFromTxt(subTreePath);
 		
 		System.out.println("No. of vertices is..."
 				+ adjacencyList.getNumberOfDistinctVertices());
@@ -30,19 +52,29 @@ public class StatisticsTest {
 				+ adjacencyList.getNumberOfEdges());
 		System.out.println("No. of place vertices is..."
 				+ adjacencyList.getNumverOfPlaceVertices());
+		
 		System.out.println("No. of distinct keywords is..."
 				+ subTree.vertexKeywordHash.size());
 		System.out.println("Average posting list length is..."
 				+ subTree.getAveragePostingListLength());
+		System.out.println("Max depth is..."
+				+ subTree.getMaxDepth());
 	}
 	
 	public static void showDBpediaStatistics() {
 		String graphPath =
-			"dataset/DBpediaData/dbpediaGraph.txt";
+				"dataset/DBpediaData/dbpediaGraph_withSameAs.txt";
+		
+		int maxDepthBound = 10;
 		String vertexKeywordPath =
-			"dataset/DBpediaData/dbpediaVertexKeyword.txt";
+				"dataset/DBpediaData/dbpediaVertexKeyword"
+						+ maxDepthBound + ".txt";
 		String subTreeKeywordPath =
-			"dataset/DBpediaData/dbpediaSubTreeKeyword.txt";
+				"dataset/DBpediaData/dbpediaSubTreeKeyword"
+						+ maxDepthBound + ".txt";
+		String subTreePath = 
+				"dataset/DBpediaData/dbpediaSubTree"
+						+ maxDepthBound + ".txt";
 		
 		AdjacencyList adjacencyList = new AdjacencyList();
 		adjacencyList.addFromTxt(graphPath);
@@ -51,6 +83,7 @@ public class StatisticsTest {
 		SubTree subTree = new SubTree();
 		subTree.readVertexKeywordFromTxt(vertexKeywordPath);
 		subTree.readRootKeywordFromTxt(subTreeKeywordPath);
+		subTree.readSubTreeFromTxt(subTreePath);
 		
 		System.out.println("No. of vertices is..."
 				+ adjacencyList.getNumberOfDistinctVertices());
@@ -58,9 +91,12 @@ public class StatisticsTest {
 				+ adjacencyList.getNumberOfEdges());
 		System.out.println("No. of place vertices is..."
 				+ adjacencyList.getNumverOfPlaceVertices());
+		
 		System.out.println("No. of distinct keywords is..."
 				+ subTree.vertexKeywordHash.size());
 		System.out.println("Average posting list length is..."
 				+ subTree.getAveragePostingListLength());
+		System.out.println("Max depth is..."
+				+ subTree.getMaxDepth());
 	}
 }

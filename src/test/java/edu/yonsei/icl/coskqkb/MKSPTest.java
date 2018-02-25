@@ -14,8 +14,9 @@ public class MKSPTest {
 
 	public static void main(String[] args) {
 		// TODO Auto-generated method stub
-		String knowledgeBaseName = "DBpedia";
+		String knowledgeBaseName = "YAGO";
 		Point queryLocation = Geometries.point(-80, 40);
+		int maxDepthBound = 1;
 		
 		/*----   Start initializing query keywords   ----*/
 		queryKeywords20 = new LinkedList<String>();
@@ -29,10 +30,10 @@ public class MKSPTest {
 		
 		if (knowledgeBaseName.equals("YAGO")) {
 			System.out.println("Start reading data from yago...");
-			mksp.readDataFromYago();
+			mksp.readDataFromYago(maxDepthBound);
 		} else if (knowledgeBaseName.equals("DBpedia")) {
 			System.out.println("Start reading data from DBpedia...");
-			mksp.readDataFromDBpedia();
+			mksp.readDataFromDBpedia(maxDepthBound);
 		}
         
 		long finishLoadingDataTime = System.currentTimeMillis();
@@ -44,42 +45,43 @@ public class MKSPTest {
 		
 		//varying k
 		executeQuery(mksp, queryLocation, 
-				queryKeywords10, 1, knowledgeBaseName);
+				queryKeywords10, 1, knowledgeBaseName, maxDepthBound);
 		executeQuery(mksp, queryLocation, 
-				queryKeywords10, 3, knowledgeBaseName);
+				queryKeywords10, 3, knowledgeBaseName, maxDepthBound);
 		executeQuery(mksp, queryLocation, 
-				queryKeywords10, 5, knowledgeBaseName);
+				queryKeywords10, 5, knowledgeBaseName, maxDepthBound);
 		executeQuery(mksp, queryLocation, 
-				queryKeywords10, 8, knowledgeBaseName);
+				queryKeywords10, 8, knowledgeBaseName, maxDepthBound);
 		executeQuery(mksp, queryLocation, 
-				queryKeywords10, 10, knowledgeBaseName);
+				queryKeywords10, 10, knowledgeBaseName, maxDepthBound);
 		executeQuery(mksp, queryLocation, 
-				queryKeywords10, 15, knowledgeBaseName);
+				queryKeywords10, 15, knowledgeBaseName, maxDepthBound);
 		executeQuery(mksp, queryLocation, 
-				queryKeywords10, 20, knowledgeBaseName);
+				queryKeywords10, 20, knowledgeBaseName, maxDepthBound);
 		
 		//varying #qk
-		/*executeQuery(mksp, queryLocation, 
-				queryKeywords5, 10, knowledgeBaseName);
 		executeQuery(mksp, queryLocation, 
-				queryKeywords8, 10, knowledgeBaseName);
+				queryKeywords5, 10, knowledgeBaseName, maxDepthBound);
 		executeQuery(mksp, queryLocation, 
-				queryKeywords10, 10, knowledgeBaseName);
+				queryKeywords8, 10, knowledgeBaseName, maxDepthBound);
 		executeQuery(mksp, queryLocation, 
-				queryKeywords15, 10, knowledgeBaseName);
+				queryKeywords10, 10, knowledgeBaseName, maxDepthBound);
 		executeQuery(mksp, queryLocation, 
-				queryKeywords20, 10, knowledgeBaseName);*/
+				queryKeywords15, 10, knowledgeBaseName, maxDepthBound);
+		executeQuery(mksp, queryLocation, 
+				queryKeywords20, 10, knowledgeBaseName, maxDepthBound);
 	}
 
 	public static void executeQuery(
 			MKSP mksp, Point queryLocation,
 			LinkedList<String> queryKeywords, int k,
-			String knowledgeBaseName) {
+			String knowledgeBaseName,
+			int maxDepthBound) {
 		System.out.println("# of query keywords="
 				+ queryKeywords.size() + ", and k=" + k);
 		mksp.kVG = mksp.findTopkValidGroup(
 				queryLocation, queryKeywords, k,
-				knowledgeBaseName);
+				knowledgeBaseName, maxDepthBound);
 		System.out.println("average ranking score of kVG is: "
 				+ mksp.calculateAverageRankingScoreOfkVG());
 		/*System.out.println("# of VG generation is: "
@@ -102,7 +104,6 @@ public class MKSPTest {
 			queryKeywords20.add("Raw");
 			queryKeywords20.add("Honorable");
 			queryKeywords20.add("Ray");
-			queryKeywords20.add("House");
 			queryKeywords20.add("Western");
 			queryKeywords20.add("Ministries");
 			queryKeywords20.add("Mile");
@@ -116,27 +117,28 @@ public class MKSPTest {
 			queryKeywords20.add("Chamouni");
 			queryKeywords20.add("Dooley");
 			queryKeywords20.add("Laurel");
+			queryKeywords20.add("Tomasza");
 		} else if (knowledgeBaseName.equals("DBpedia")) {
+			queryKeywords20.add("Rama");
 			queryKeywords20.add("Saltlick");
-			queryKeywords20.add("Louise");
 			queryKeywords20.add("wreck");
-			queryKeywords20.add("Jacks");
-			queryKeywords20.add("Pappert");
-			queryKeywords20.add("WFGM-FM");
+			queryKeywords20.add("Chico");
+			queryKeywords20.add("Rams");
 			queryKeywords20.add("BCC");
-			queryKeywords20.add("WXKX");
-			queryKeywords20.add("Nashville");
 			queryKeywords20.add("BCL");
 			queryKeywords20.add("Steele");
-			queryKeywords20.add("Yough");
-			queryKeywords20.add("Southview");
+			queryKeywords20.add("Madden");
 			queryKeywords20.add("Taylorstown");
 			queryKeywords20.add("Chrysostom");
 			queryKeywords20.add("Minerals");
-			queryKeywords20.add("KDKA");
-			queryKeywords20.add("ShopNBC");
 			queryKeywords20.add("Amtrak");
 			queryKeywords20.add("Sewall");
+			queryKeywords20.add("Pontotoc");
+			queryKeywords20.add("Gladesville");
+			queryKeywords20.add("Fond");
+			queryKeywords20.add("Ada");
+			queryKeywords20.add("www.fresno.gov");
+			queryKeywords20.add("pittsburghmills.com");
 		}
 		
 		return queryKeywords20;
